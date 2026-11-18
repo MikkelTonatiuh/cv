@@ -202,11 +202,12 @@
   </div>
 
   <main style="position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: clamp(104px, 13vh, 136px) 20px 4vh">
-    <h1 ref="{{ nameRef }}" data-mutter="name" style="margin: 0 0 28px; padding: 0; font-size: 0; line-height: 0">
+    <h1 ref="{{ nameRef }}" data-mutter="name" style="margin: 0 0 8px; padding: 0; font-size: 0; line-height: 0">
       <span ref="{{ mathRef }}" aria-hidden="true" style="position: absolute; display: block; max-width: 100%; width: 330px; height: 96px; opacity: 0; pointer-events: none; z-index: 2"></span>
     </h1>
 
-    <p style="margin: 0 0 12px; font-size: 15px; line-height: 1.5; max-width: 42rem; text-wrap: pretty">{{ intro }} <a class="ilink" data-mutter="app" href="https://mikkeltonatiuh.github.io/machine-program/" title="{{ dlHint }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>{{ dlLabel }}</a>.</p>
+    <p style="margin: 0 0 16px; font-size: 13px; color: var(--ink-2)">{{ lede }}</p>
+    <p style="margin: 0 0 12px; font-size: 15px; line-height: 1.5; max-width: 42rem; text-wrap: pretty">{{ intro }}</p>
     <div style="margin: 0 0 34px; font-size: 13px">
       <p data-mutter="meta" style="margin: 0 0 6px; color: var(--ink-2)">{{ meta }}</p>
       <fieldset class="skills" data-mutter="skills"><legend>{{ skillsLabel }}</legend><code>Python</code><code>R</code><code>SQL</code><code>Java</code><span class="sep"></span><code>PyTorch</code><code>LLM agents</code><span class="caret" aria-hidden="true"></span></fieldset>
@@ -304,7 +305,7 @@ class Component extends DCLogic {
 
   COPY = {
     en: {
-      lede: "Looking for a student assistant or internship in ML engineering, Aarhus commuting area.",
+      lede: "Open to internships, trainee and junior roles",
       openLabel: "Open to work",
       themeDark: "Light",
       themeLight: "Dark",
@@ -312,7 +313,7 @@ class Component extends DCLogic {
       unmuteLabel: "Sound",
       muteAria: "Mute Blop",
       unmuteAria: "Sound: let Blop talk",
-      intro: "Data science at Aarhus University. I like training deep learning models, whatever the domain. Outside that, fitness and health, with",
+      intro: "I train and ship deep learning models. Kaggle silver medal in medical imaging (top 5% of 6,299 teams, top 0.9% on its efficiency leaderboard), a published paper in Journal of Imaging, and currently rank {n} in Google DeepMind's Gemma 4 agent competition. Looking for an internship or junior role in ML or data around Aarhus.",
       dlLabel: "my own training app",
       dlHint: "My 7-day machine workout, as an app",
       meta: "Odder, Denmark · Danish native · English C2 · Spanish intermediate",
@@ -357,7 +358,7 @@ class Component extends DCLogic {
       whenPub: "2025",
     },
     es: {
-      lede: "Busco studentermedhjælper o internship en ingeniería de ML, zona de Aarhus.",
+      lede: "Disponible para internships, trainee y puestos junior",
       openLabel: "Disponible para trabajar",
       themeDark: "Claro",
       themeLight: "Oscuro",
@@ -365,7 +366,7 @@ class Component extends DCLogic {
       unmuteLabel: "Sonido",
       muteAria: "Silenciar a Blop",
       unmuteAria: "Sonido: que Blop hable",
-      intro: "Ciencia de datos en la Universidad de Aarhus. Me gusta entrenar modelos de deep learning, sea el dominio que sea. Fuera de eso, fitness y salud, con",
+      intro: "Entreno y pongo en producción modelos de deep learning. Medalla de plata en Kaggle en imagen médica (top 5 % de 6.299 equipos, top 0,9 % en su clasificación de eficiencia), un artículo publicado en Journal of Imaging, y actualmente puesto {n} en la competición de agentes Gemma 4 de Google DeepMind. Busco un internship o un puesto junior en ML o datos en la zona de Aarhus.",
       dlLabel: "mi propia app de entrenamiento",
       dlHint: "Mi rutina de 7 días con máquinas, como app",
       meta: "Odder, Dinamarca · danés nativo · inglés C2 · español intermedio",
@@ -410,7 +411,7 @@ class Component extends DCLogic {
       whenPub: "2025",
     },
     da: {
-      lede: "Søger studentermedhjælper eller internship i ML-engineering, pendlingsafstand Aarhus.",
+      lede: "Åben for internships, trainee- og juniorstillinger",
       openLabel: "Åben for arbejde",
       themeDark: "Lys",
       themeLight: "Mørk",
@@ -418,7 +419,7 @@ class Component extends DCLogic {
       unmuteLabel: "Lyd til",
       muteAria: "Lyd fra for Blop",
       unmuteAria: "Lyd til for Blop",
-      intro: "Datavidenskab på Aarhus Universitet. Jeg kan godt lide at træne deep learning-modeller, uanset domænet. Udenfor det, fitness og sundhed, med",
+      intro: "Jeg træner og leverer deep learning-modeller. Kaggle-sølvmedalje i medicinsk billeddiagnostik (top 5 % af 6.299 hold, top 0,9 % på dens efficiency-rangliste), en publiceret artikel i Journal of Imaging, og i øjeblikket nr. {n} i Google DeepMinds Gemma 4-agentkonkurrence. Søger internship eller en juniorstilling i ML eller data omkring Aarhus.",
       dlLabel: "min egen træningsapp",
       dlHint: "Min 7-dages maskinrutine som app",
       meta: "Odder, Danmark · dansk indfødt · engelsk C2 · spansk på mellemniveau",
@@ -820,11 +821,12 @@ class Component extends DCLogic {
     const copy = this.COPY[this.state.lang];
     const on = (id) => (this.state.lang === id ? "var(--ink-hi)" : "var(--ink-3)");
     return {
-      intro: copy.intro,
+      intro: copy.intro.replace("{n}", this.state.gemmaRank),
       dlLabel: copy.dlLabel,
       skillsLabel: copy.skillsLabel,
       dlHint: copy.dlHint,
       openLabel: copy.openLabel,
+      lede: copy.lede,
       themeLabel: this.state.theme === "light" ? copy.themeLight : copy.themeDark,
       themeAria: this.state.theme === "light" ? "Switch to dark mode" : "Switch to light mode",
       sndHidden: !this.VOICE,
