@@ -60,7 +60,7 @@ if (process.env.PHONE) {
 }
 
 /* Links in the PDF go to the live site, not to the local server it was printed from. */
-const LIVE = "https://mikkeltonatiuh.github.io/voicemaster-rendering/";
+const LIVE = process.env.LIVE || "https://mikkeltonatiuh.github.io/cv/";
 await page.evaluate((live) => {
   for (const a of document.querySelectorAll("a[href]")) {
     const href = a.getAttribute("href");
