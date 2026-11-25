@@ -3,8 +3,8 @@
 //
 //   node tools/print-cv.mjs [out.pdf] [lang: en|da|es]
 //
-// PHONE="12 34 56 78" adds a phone number to the printed contact line; it is
-// not stored in the page itself. Needs Playwright (npm i -D playwright).
+// PHONE="12 34 56 78" adds a phone mark to the contact marks under the photo; the
+// number is not stored in the page itself. Needs Playwright (npm i -D playwright).
 import { createRequire } from "module";
 import http from "http";
 import fs from "fs";
@@ -47,12 +47,15 @@ if (lang !== "en") await page.click(`button:text-is("${lang}")`);
 /* The name is written, the portrait has come out of its noise, the terminal rests on its last frame. */
 await page.waitForTimeout(9000);
 if (process.env.PHONE) {
+  /* A phone mark next to the others under the photo. */
   await page.evaluate((phone) => {
-    const line = document.querySelector(".print-contact");
+    const nav = document.querySelector(".pf-col .contact");
     const a = document.createElement("a");
     a.href = "tel:" + phone.replace(/\s+/g, "");
-    a.textContent = phone;
-    line.insertBefore(a, line.children[1]);
+    a.setAttribute("aria-label", "Phone " + phone);
+    a.title = phone;
+    a.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5h2.6l1.4 4.2-2 1.4a12 12 0 006.3 6.3l1.4-2 4.2 1.4v2.6a2 2 0 01-2.2 2A16.5 16.5 0 014.6 5.7a2 2 0 012-2.2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+    nav.insertBefore(a, nav.children[1]);
   }, process.env.PHONE);
 }
 
