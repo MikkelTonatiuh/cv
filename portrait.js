@@ -29,9 +29,13 @@ export function mountPortrait(host, { delay = 200, duration = 2800 } = {}) {
   canvas.setAttribute("aria-hidden", "true");
   host.append(canvas, photo);
 
-  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  /* Like the name above it, the reveal plays once on every device. With reduced
+     motion asked for it is calmer: the noise holds still until it starts, and the
+     reveal takes half as many, slower steps. */
+  const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const steps = calm ? 24 : 60;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (still || !ctx) {
+  if (!ctx) {
     photo.src = "cv/portrait.jpg";
     canvas.remove();
     return { destroy() { photo.remove(); } };
@@ -85,7 +89,7 @@ export function mountPortrait(host, { delay = 200, duration = 2800 } = {}) {
      sampler warming up rather than a stuck image. */
   let lastIdle = 0;
   const tick = (now) => {
-    if (!alive || started || shown) return;
+    if (!alive || started || shown || calm) return;
     if (visible && now - lastIdle > 110) { lastIdle = now; refresh(); paint(null, 0, 1); }
     idle = requestAnimationFrame(tick);
   };
@@ -122,7 +126,7 @@ export function mountPortrait(host, { delay = 200, duration = 2800 } = {}) {
           elapsed += Math.min(Math.max(0, now - prev), 64);
           prev = now;
           const p = Math.min(1, elapsed / duration);
-          const k = Math.floor(p * 60);
+          const k = Math.floor(p * steps);
           if (k !== last) {
             last = k;
             /* Cosine schedule, ā(t) = cos²(π/2 · (t + s) / (1 + s)), from t = 0.9 to 0:

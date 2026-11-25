@@ -772,7 +772,7 @@ class Component extends DCLogic {
     /* The portrait goes first and does not wait on anything after it; each
        module below is mounted on its own, so one failing does not stop the rest. */
     if (this.portraitHost) {
-      import("./portrait.js")
+      import("./portrait.js?v=3")
         .then(({ mountPortrait }) => { if (this.portraitHost) this.portrait = mountPortrait(this.portraitHost); })
         .catch((err) => console.warn("portrait unavailable", err));
     }
