@@ -59,6 +59,15 @@ if (process.env.PHONE) {
   }, process.env.PHONE);
 }
 
+/* Links in the PDF go to the live site, not to the local server it was printed from. */
+const LIVE = "https://mikkeltonatiuh.github.io/voicemaster-rendering/";
+await page.evaluate((live) => {
+  for (const a of document.querySelectorAll("a[href]")) {
+    const href = a.getAttribute("href");
+    if (!/^(https?:|mailto:|tel:|#)/.test(href)) a.setAttribute("href", new URL(href, live).href);
+  }
+}, LIVE);
+
 /* The largest scale at which it still fits one page. */
 const pdfAt = (scale) => page.pdf({ format: "A4", printBackground: true, preferCSSPageSize: true, scale });
 const pagesIn = (buf) => (buf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
