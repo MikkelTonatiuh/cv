@@ -9,6 +9,8 @@
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<title>Mikkel T. Chávez Petersen · Data Science</title>
+<meta name="description" content="Data Science graduate (BSc, Aarhus University, 2026). Solo Kaggle silver medal in knee-MRI AI, a paper in Journal of Imaging, and a Gemma 4 coding agent in Google DeepMind's Kaggle competition. Looking for ML or data roles around Aarhus.">
 <link rel="preload" as="image" href="cv/portrait.jpg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Google+Sans:wght@500&display=swap">
 <style>
@@ -48,7 +50,7 @@
   .skills legend { padding: 0 6px; margin-left: -2px; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--warm-text); }
   .skills code { font-family: ui-monospace, Consolas, 'Cascadia Mono', monospace; font-size: 12px; font-weight: 600; color: var(--warm-text); border: 1px solid color-mix(in srgb, var(--ink) 28%, transparent); border-bottom-width: 2px; border-radius: 5px; padding: 1px 8px; background: color-mix(in srgb, var(--ink) 6%, transparent); }
   .skills .sep { width: 1px; height: 14px; background: color-mix(in srgb, var(--ink) 30%, transparent); margin: 0 4px; }
-  .skills .caret { width: 8px; height: 16px; background: var(--warm-text); margin-left: 3px; animation: caret 1.06s step-end infinite; }
+  .skills .caret { width: 8px; height: 16px; background: var(--warm-text); margin-left: 3px; animation: caret 1.06s step-end 6; }
   @keyframes caret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
   /* The portrait (portrait.js) with the contact marks under it, floated so the
      intro runs beside it. The marks say where they go; the tooltip and label say it in words. */
@@ -71,10 +73,25 @@
   .mark { background: color-mix(in srgb, var(--warm-text) 16%, transparent); color: var(--warm-text); font-weight: 600; padding: 1px 6px; border-radius: 3px; }
   .mark.silver { background: var(--silver-bg); color: var(--silver); }
   .medal { display: inline-block; width: 8px; height: 8px; margin: 0 6px 0 1px; border-radius: 50%; vertical-align: 1px; background: linear-gradient(155deg, #F4F6F9 0%, #C6CDD6 48%, #8E98A4 100%); box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--silver) 28%, transparent); }
-  .tag { font-size: 12px; font-weight: 600; color: var(--ink-3); margin-right: 8px; }
+  .tag { font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin-right: 8px; }
   /* Titles one step brighter than the body. */
   .tl h3, .tl h4, .tl h3 a, .tl h4 a, .tl .hd { color: var(--ink-hi); }
   .tl h3, .tl h4 { text-wrap: balance; }
+  /* Three steps of type: entry titles one step above the body, the body, and the meta line. */
+  .et { margin: 0 0 4px; font-size: 17px; font-weight: 600; line-height: 1.35; letter-spacing: -0.01em; }
+  .et .arr, .tl h4 .arr { color: var(--warm-text); font-size: 13px; font-weight: 500; }
+  .et .st { margin-left: 8px; font-size: 13px; font-weight: 500; color: var(--ink-2); letter-spacing: 0; }
+  .tl-item > article { margin: 0 0 44px; }
+  .lede { margin: 2px 0 18px; font-size: 15px; font-weight: 500; line-height: 1.45; color: var(--ink); text-wrap: balance; }
+  .dl.cert { margin-left: 10px; vertical-align: 1px; }
+  .getintouch { margin: 48px 0 0; font-size: 15px; color: var(--ink); }
+  @media (max-width: 600px) {
+    .et { font-size: 16px; }
+    .tl-item > article { margin-bottom: 36px; }
+    .dl.cert { margin: 6px 0 0; }
+  }
+  /* The fixed controls would sit on top of the text as it scrolls under them on a narrow screen. */
+  @media (max-width: 1100px) { [data-controls] { position: absolute !important; } }
   /* A rank never breaks across lines. */
   .tl b { white-space: nowrap; }
   /* Two quiet link forms instead of rows of grey links: a phrase linked where
@@ -99,7 +116,7 @@
   .tl-item::before { content: ""; position: absolute; left: -23px; top: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--warm); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warm) 22%, transparent); }
   .tl-item:not(:last-child)::after { content: ""; position: absolute; left: -20px; top: 16px; bottom: -5px; width: 1px; background: color-mix(in srgb, var(--warm) 38%, transparent); }
   .tl-label { position: relative; }
-  .tl-label .when { position: absolute; right: calc(100% + 38px); top: 0; white-space: nowrap; font-size: 12.5px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink-3); }
+  .tl-label .when { position: absolute; right: calc(100% + 38px); top: 0; white-space: nowrap; font-size: 13px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink-2); font-variant-numeric: tabular-nums; }
   .tl-label .when.now { color: var(--warm-text); font-weight: 700; opacity: 1; }
   /* The entry still running gets the same ring as "open to work". */
   .tl-ring { position: absolute; left: -23px; top: 5px; width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--warm); box-sizing: border-box; pointer-events: none; animation: openRing 2.2s ease-out infinite; }
@@ -112,7 +129,7 @@
   .vid { display: flex; align-items: center; gap: 14px; width: fit-content; max-width: 100%; margin: 0 0 14px; padding: 6px 16px 6px 6px; border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent); border-radius: 10px; box-sizing: border-box; transition: border-color 0.15s; }
   .vid:last-child { margin-bottom: 0; }
   .vid:hover { border-color: var(--warm-text); text-decoration: none; }
-  .vid img { display: block; width: 136px; height: auto; aspect-ratio: 16 / 9; border-radius: 6px; flex: none; background: #000; }
+  .vid img { display: block; width: 76px; height: 76px; object-fit: cover; object-position: 100% 50%; border-radius: 6px; flex: none; background: #000; }
   .vid-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .vid-cap { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; color: var(--ink-hi); }
   .vid-cap svg { width: 13px; height: 13px; flex: none; color: var(--warm-text); }
@@ -121,7 +138,7 @@
   /* After the base rules, which have the same specificity. */
   @media (max-width: 860px) {
     .vid { gap: 12px; padding-right: 12px; }
-    .vid img { width: 104px; }
+    .vid img { width: 64px; height: 64px; }
     .vid-cap { font-size: 13.5px; }
   }
   /* The Gemma 4 entry is one box: the host's band on top with its marks, the
@@ -139,9 +156,9 @@
   .gx-meta { grid-area: 1 / 2 / 2 / 4; justify-self: end; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: baseline; gap: 0 12px; margin: 0 0 7px; font-size: 12.5px; line-height: 20px; color: #A9AFBA; white-space: nowrap; }
   .gx-meta .kg { color: #20BEFF; }
   .gx-meta .dot { margin: 0 6px; }
-  .gx-lb { position: relative; z-index: 1; color: #E9E6DF; }
+  .gx-lb { position: relative; z-index: 1; color: #F4F1EA; font-size: 13.5px; font-weight: 600; }
   .gx-band .arr { color: #FFB13D; font-size: 12px; }
-  .gx-title { grid-area: 2 / 1 / 3 / 3; margin: 0; font-size: 15px; font-weight: 600; line-height: 21px; text-wrap: balance; }
+  .gx-title { grid-area: 2 / 1 / 3 / 3; margin: 0; font-size: 16px; font-weight: 600; line-height: 21px; text-wrap: balance; }
   .tl .gx-title a { color: #FAF7F1; }
   .gx-title a::after { content: ""; position: absolute; inset: -1px; border-radius: 10px; }
   .gx-title a:focus-visible { outline: 0; }
@@ -221,7 +238,7 @@
       <span ref="{{ mathRef }}" aria-hidden="true" style="position: absolute; display: block; max-width: 100%; width: 330px; height: 96px; opacity: 0; pointer-events: none; z-index: 2"></span>
     </h1>
 
-    <p style="margin: 0 0 16px; font-size: 13px; color: var(--ink-2)">{{ lede }}</p>
+    <p class="lede">{{ lede }}</p>
     <div class="pf-col">
       <span class="pf" ref="{{ portraitRef }}"></span>
       <nav class="contact" data-mutter="contact">
@@ -233,14 +250,14 @@
     </div>
     <p style="margin: 0 0 12px; font-size: 15px; line-height: 1.5; max-width: 42rem; text-wrap: pretty">{{ intro }}</p>
     <div style="margin: 0 0 34px; font-size: 13px">
-      <p data-mutter="meta" style="margin: 0 0 6px; color: var(--ink-2)">{{ meta }}</p>
+      <p data-mutter="meta" style="margin: 0 0 6px; color: var(--ink-2)">{{ meta }} <span style="white-space: nowrap">· <a class="il" href="mailto:mikkeltcp@hotmail.com">mikkeltcp@hotmail.com</a></span></p>
       <fieldset class="skills" data-mutter="skills"><legend>{{ skillsLabel }}</legend><code>Python</code><code>R</code><code>SQL</code><code>Java</code><span class="sep"></span><code>PyTorch</code><code>LLM agents</code><span class="caret" aria-hidden="true"></span></fieldset>
     </div>
 
     <div class="tl">
     <section class="tl-item">
     <span class="tl-ring" aria-hidden="true"></span>
-    <article data-mutter="gemma" style="margin: 0 0 28px">
+    <article data-mutter="gemma">
       <p class="tl-label" style="margin: 0 0 5px; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--warm-text)"><span class="when now">{{ whenGemma }}</span>{{ compLabel }}</p>
       <div class="gx">
         <div class="gx-band">
@@ -255,15 +272,15 @@
     </article>
     </section>
     <section class="tl-item">
-    <article data-mutter="rsna" style="margin: 0 0 28px">
+    <article data-mutter="rsna">
       <p class="tl-label" style="margin: 0 0 5px; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--warm-text)"><span class="when">{{ whenRsna }}</span>{{ compLabel }}</p>
-      <h3 style="margin: 0 0 4px; font-size: 15px; font-weight: 600; line-height: 1.45">
-        <a href="https://www.kaggle.com/competitions/rsna-knee-abnormality-detection">2026 RSNA Knee Abnormality Detection AI Challenge</a>
+      <h3 class="et">
+        <a href="https://www.kaggle.com/competitions/rsna-knee-abnormality-detection">2026 RSNA Knee Abnormality Detection AI Challenge <span class="arr">&#8599;</span></a>
       </h3>
-      <p class="meta"><svg class="kg" viewBox="0 7.35 24 9.3" role="img" aria-label="Kaggle"><path fill="currentColor" d="M.1025 7.3475c-.0681 0-.1022.0341-.1022.102v6.752c0 .0681.034.1022.1022.1022h.7049c.068 0 .1022-.034.1022-.1023v-1.481l.4187-.3985 1.5016 1.91c.041.0477.0884.0716.143.0716h.9091c.0476 0 .0748-.0135.0817-.0407.0135-.041.0066-.075-.0206-.1023l-1.9816-2.4618 1.9002-1.8384c.0204-.0205.0237-.051.01-.092-.0137-.0339-.0408-.051-.0816-.051h-.9398c-.0477 0-.0953.024-.143.0716L.9096 11.607V7.4496c0-.0679-.0342-.102-.1022-.102zm18.0417 0c-.068 0-.102.0341-.102.102v6.752c0 .0681.034.102.102.102h.705c.068 0 .102-.034.102-.102v-6.752c0-.068-.034-.102-.102-.102zM5.961 9.6254c-.5653 0-1.11.1806-1.6343.5415-.0545.0545-.0648.102-.0307.143l.3676.5208c.0272.0477.0717.0545.133.0204.3948-.2722.783-.4086 1.1644-.4086.2927 0 .5158.0886.669.2656.1532.1771.2197.3917.1992.6436-.6606.0681-1.1545.1495-1.4813.245-.8308.2383-1.2461.6913-1.2461 1.3586 0 .4222.1533.7695.4598 1.0419.3132.2654.6845.3982 1.1134.3982.4698 0 .8545-.1125 1.1542-.3372v.1432c0 .0682.0374.102.1123.102h.7048c.068 0 .102-.0338.102-.102V11.372c0-.6604-.2245-1.1406-.6739-1.4403-.3065-.2043-.6776-.3063-1.1134-.3063zm4.3225 0c-.6742 0-1.195.2622-1.5627.7865-.3133.4359-.4699.9671-.4699 1.5936 0 .6604.1634 1.2087.4903 1.6444.3744.4972.892.7455 1.5526.7455.5313 0 .9567-.1327 1.2768-.3982v.531c0 .858-.4122 1.287-1.236 1.287-.361 0-.732-.1907-1.1132-.572a.098.098 0 00-.0716-.0306c-.034 0-.0613.0102-.0817.0307l-.4802.48c-.0408.0613-.0375.1124.0103.1532.1361.1157.2554.2129.3576.2911.102.0783.1905.1413.2656.189.354.1975.7284.2961 1.1235.2961.6808 0 1.207-.1925 1.5781-.577.3711-.3848.5567-.9484.5567-1.6903V9.8196c0-.068-.034-.102-.102-.102h-.705c-.0682 0-.1021.034-.1021.102v.2043c-.3471-.2657-.7763-.3985-1.287-.3985zm4.8021 0c-.6742 0-1.195.2622-1.5627.7865-.3132.4359-.4699.9671-.4699 1.5936 0 .6604.1633 1.2087.4903 1.6444.3744.4972.892.7455 1.5526.7455.5311 0 .9566-.1327 1.2768-.3982v.531c0 .858-.4122 1.287-1.236 1.287-.361 0-.732-.1907-1.1133-.572a.098.098 0 00-.0716-.0306c-.034 0-.0612.0102-.0816.0307l-.48.48c-.0409.0613-.0376.1124.01.1532.1363.1157.2555.2129.3576.2911.1021.0783.1906.1413.2657.189.354.1975.7285.2961 1.1237.2961.6808 0 1.2068-.1925 1.5781-.577.371-.3848.5565-.9484.5565-1.6903V9.8196c0-.068-.034-.102-.102-.102h-.7049c-.0682 0-.1022.034-.1022.102v.2043c-.3474-.2657-.7763-.3985-1.287-.3985zm6.7457 0c-.6537 0-1.185.211-1.5936.6332-.4427.4632-.664 1.0283-.664 1.6956 0 .7083.225 1.2905.6743 1.7467.463.463 1.042.6945 1.7366.6945.6467 0 1.2154-.1838 1.7057-.5515.0545-.041.0545-.0884 0-.143l-.4802-.4903c-.041-.0409-.0919-.0409-.1533 0-.2998.2112-.6368.3167-1.0112.3167-.4222 0-.7729-.119-1.052-.3576-.2452-.2248-.3882-.5038-.429-.8375h3.3197c.0679 0 .1022-.0341.1022-.1023l.01-.2244c.0341-.6878-.1668-1.26-.6025-1.7162-.4224-.4426-.9432-.664-1.5627-.664zm-.0206.7865c.3268 0 .6062.1056.8377.3166.2452.211.371.4734.378.7865h-2.4618c.0613-.3269.2077-.5925.4392-.7968.2313-.2042.5004-.3063.8069-.3063zm-11.4249.102c.6196 0 1.0146.2181 1.1848.6538v1.6854c-.1702.4358-.5755.6538-1.2155.6538-.3133 0-.5687-.0986-.7661-.2963-.2656-.2518-.3983-.6538-.3983-1.2053 0-.9941.3984-1.4914 1.1951-1.4914zm4.802 0c.6196 0 1.0148.2181 1.1851.6538h-.0002v1.6854c-.1703.4358-.5755.6538-1.2155.6538-.3132 0-.5686-.0986-.7661-.2963-.2655-.2518-.3983-.6538-.3983-1.2053 0-.9941.3983-1.4914 1.195-1.4914zm-8.3586 1.6547v1.0215c-.286.286-.6675.412-1.1441.3779-.1703-.0135-.32-.0663-.4493-.1582-.1294-.0919-.2045-.2129-.2249-.3627-.0341-.2657.1158-.47.4495-.6129.2452-.1088.7013-.1974 1.3688-.2656z"/></svg><span class="dot" aria-hidden="true">&#183;</span><a class="xl" href="https://www.rsna.org/artificial-intelligence/ai-image-challenge/knee-mri-ai-challenge">RSNA <span class="arr">&#8599;</span></a><span class="dot" aria-hidden="true">&#183;</span><a class="xl" href="https://www.kaggle.com/certification/competitions/bliverrigpdoge/rsna-knee-abnormality-detection">{{ rsnaCert }} <span class="arr">&#8599;</span></a></p>
-      <p style="margin: 0 0 4px; font-size: 15px; max-width: 42rem; text-wrap: pretty"><span class="mark silver"><i class="medal" aria-hidden="true"></i>{{ rsnaTop }}</span> {{ rsnaPre }}<a class="il" href="https://www.kaggle.com/competitions/rsna-knee-abnormality-detection/leaderboard">{{ rsnaBoardLink }}</a>{{ rsnaPost }} <b style="font-weight: 600">{{ rsnaCount }}</b> {{ rsnaTail }}</p>
+      <p class="meta"><svg class="kg" viewBox="0 7.35 24 9.3" role="img" aria-label="Kaggle"><path fill="currentColor" d="M.1025 7.3475c-.0681 0-.1022.0341-.1022.102v6.752c0 .0681.034.1022.1022.1022h.7049c.068 0 .1022-.034.1022-.1023v-1.481l.4187-.3985 1.5016 1.91c.041.0477.0884.0716.143.0716h.9091c.0476 0 .0748-.0135.0817-.0407.0135-.041.0066-.075-.0206-.1023l-1.9816-2.4618 1.9002-1.8384c.0204-.0205.0237-.051.01-.092-.0137-.0339-.0408-.051-.0816-.051h-.9398c-.0477 0-.0953.024-.143.0716L.9096 11.607V7.4496c0-.0679-.0342-.102-.1022-.102zm18.0417 0c-.068 0-.102.0341-.102.102v6.752c0 .0681.034.102.102.102h.705c.068 0 .102-.034.102-.102v-6.752c0-.068-.034-.102-.102-.102zM5.961 9.6254c-.5653 0-1.11.1806-1.6343.5415-.0545.0545-.0648.102-.0307.143l.3676.5208c.0272.0477.0717.0545.133.0204.3948-.2722.783-.4086 1.1644-.4086.2927 0 .5158.0886.669.2656.1532.1771.2197.3917.1992.6436-.6606.0681-1.1545.1495-1.4813.245-.8308.2383-1.2461.6913-1.2461 1.3586 0 .4222.1533.7695.4598 1.0419.3132.2654.6845.3982 1.1134.3982.4698 0 .8545-.1125 1.1542-.3372v.1432c0 .0682.0374.102.1123.102h.7048c.068 0 .102-.0338.102-.102V11.372c0-.6604-.2245-1.1406-.6739-1.4403-.3065-.2043-.6776-.3063-1.1134-.3063zm4.3225 0c-.6742 0-1.195.2622-1.5627.7865-.3133.4359-.4699.9671-.4699 1.5936 0 .6604.1634 1.2087.4903 1.6444.3744.4972.892.7455 1.5526.7455.5313 0 .9567-.1327 1.2768-.3982v.531c0 .858-.4122 1.287-1.236 1.287-.361 0-.732-.1907-1.1132-.572a.098.098 0 00-.0716-.0306c-.034 0-.0613.0102-.0817.0307l-.4802.48c-.0408.0613-.0375.1124.0103.1532.1361.1157.2554.2129.3576.2911.102.0783.1905.1413.2656.189.354.1975.7284.2961 1.1235.2961.6808 0 1.207-.1925 1.5781-.577.3711-.3848.5567-.9484.5567-1.6903V9.8196c0-.068-.034-.102-.102-.102h-.705c-.0682 0-.1021.034-.1021.102v.2043c-.3471-.2657-.7763-.3985-1.287-.3985zm4.8021 0c-.6742 0-1.195.2622-1.5627.7865-.3132.4359-.4699.9671-.4699 1.5936 0 .6604.1633 1.2087.4903 1.6444.3744.4972.892.7455 1.5526.7455.5311 0 .9566-.1327 1.2768-.3982v.531c0 .858-.4122 1.287-1.236 1.287-.361 0-.732-.1907-1.1133-.572a.098.098 0 00-.0716-.0306c-.034 0-.0612.0102-.0816.0307l-.48.48c-.0409.0613-.0376.1124.01.1532.1363.1157.2555.2129.3576.2911.1021.0783.1906.1413.2657.189.354.1975.7285.2961 1.1237.2961.6808 0 1.2068-.1925 1.5781-.577.371-.3848.5565-.9484.5565-1.6903V9.8196c0-.068-.034-.102-.102-.102h-.7049c-.0682 0-.1022.034-.1022.102v.2043c-.3474-.2657-.7763-.3985-1.287-.3985zm6.7457 0c-.6537 0-1.185.211-1.5936.6332-.4427.4632-.664 1.0283-.664 1.6956 0 .7083.225 1.2905.6743 1.7467.463.463 1.042.6945 1.7366.6945.6467 0 1.2154-.1838 1.7057-.5515.0545-.041.0545-.0884 0-.143l-.4802-.4903c-.041-.0409-.0919-.0409-.1533 0-.2998.2112-.6368.3167-1.0112.3167-.4222 0-.7729-.119-1.052-.3576-.2452-.2248-.3882-.5038-.429-.8375h3.3197c.0679 0 .1022-.0341.1022-.1023l.01-.2244c.0341-.6878-.1668-1.26-.6025-1.7162-.4224-.4426-.9432-.664-1.5627-.664zm-.0206.7865c.3268 0 .6062.1056.8377.3166.2452.211.371.4734.378.7865h-2.4618c.0613-.3269.2077-.5925.4392-.7968.2313-.2042.5004-.3063.8069-.3063zm-11.4249.102c.6196 0 1.0146.2181 1.1848.6538v1.6854c-.1702.4358-.5755.6538-1.2155.6538-.3133 0-.5687-.0986-.7661-.2963-.2656-.2518-.3983-.6538-.3983-1.2053 0-.9941.3984-1.4914 1.1951-1.4914zm4.802 0c.6196 0 1.0148.2181 1.1851.6538h-.0002v1.6854c-.1703.4358-.5755.6538-1.2155.6538-.3132 0-.5686-.0986-.7661-.2963-.2655-.2518-.3983-.6538-.3983-1.2053 0-.9941.3983-1.4914 1.195-1.4914zm-8.3586 1.6547v1.0215c-.286.286-.6675.412-1.1441.3779-.1703-.0135-.32-.0663-.4493-.1582-.1294-.0919-.2045-.2129-.2249-.3627-.0341-.2657.1158-.47.4495-.6129.2452-.1088.7013-.1974 1.3688-.2656z"/></svg><span class="dot" aria-hidden="true">&#183;</span><a class="xl" href="https://www.rsna.org/artificial-intelligence/ai-image-challenge/knee-mri-ai-challenge">RSNA <span class="arr">&#8599;</span></a></p>
+      <p style="margin: 0 0 10px; font-size: 15px; max-width: 34rem; text-wrap: pretty">{{ rsnaCopy }}</p>
+      <p style="margin: 0 0 6px; font-size: 15px; max-width: 42rem; text-wrap: pretty"><span class="mark silver"><i class="medal" aria-hidden="true"></i>{{ rsnaTop }}</span> <a class="il" href="https://www.kaggle.com/competitions/rsna-knee-abnormality-detection/leaderboard"><b style="font-weight: 600">{{ rsnaCount }}</b></a> {{ rsnaTail }}<a class="dl cert" href="https://www.kaggle.com/certification/competitions/bliverrigpdoge/rsna-knee-abnormality-detection"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 13.8-1.6 7.2 5.1-2.6 5.1 2.6-1.6-7.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>{{ rsnaCert }} <span class="arr">&#8599;</span></a></p>
       <p style="margin: 0 0 12px; font-size: 15px; max-width: 42rem; text-wrap: pretty"><span class="mark">{{ effTop }}</span> {{ effPre }}<a class="il" href="https://www.kaggle.com/code/ryanholbrook/rsna-knee-abnormalities-efficiency-lb">{{ effBoardLink }}</a>{{ effPost }} <b style="font-weight: 600">{{ effCount }}</b> {{ effTail }}</p>
-      <p style="margin: 0 0 14px; font-size: 15px; max-width: 34rem; text-wrap: pretty">{{ rsnaCopy }}</p>
       <a class="vid" href="https://www.youtube.com/watch?v=Rr1IKsQdcrY" aria-label="{{ videoAlt }}">
         <img src="cv/rsna-video.jpg" alt="{{ videoAlt }}" width="960" height="540" loading="lazy">
         <span class="vid-txt">
@@ -275,55 +292,56 @@
 
     </section>
     <section class="tl-item">
-    <article style="margin: 0 0 26px">
+    <article>
       <div data-mutter="edu">
         <h2 class="tl-label" style="margin: 0 0 5px; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--warm-text)"><span class="when">{{ whenEdu }}</span>{{ eduLabel }}</h2>
-        <h3 style="margin: 0 0 8px; font-size: 15px; font-weight: 600; line-height: 1.45">BSc Data Science, Aarhus University</h3>
+        <h3 class="et">BSc Data Science, Aarhus University</h3>
       </div>
       <div data-mutter="thesis">
-        <p style="margin: 0 0 6px; font-size: 15px; font-weight: 600; line-height: 1.45"><span class="tag">{{ thesisLabel }}</span><a class="hd" href="thesis/">Development of an AI System for Improving Speaking Skills through Voice Modulation and Tone Practice</a><a class="xl pdf" href="cv/thesis.pdf">PDF <span class="arr">&#8599;</span></a></p>
+        <p class="meta" style="margin: 0 0 2px">{{ thesisLabel }}<span class="dot" aria-hidden="true">&#183;</span><a class="xl" href="thesis/">{{ thesisExplained }} <span class="arr">&#8599;</span></a><span class="dot" aria-hidden="true">&#183;</span><a class="xl" href="cv/thesis.pdf">PDF <span class="arr">&#8599;</span></a></p>
+        <p style="margin: 0 0 6px; font-size: 15px; font-weight: 500; line-height: 1.45; color: var(--ink-hi); max-width: 34rem; text-wrap: balance">Development of an AI System for Improving Speaking Skills through Voice Modulation and Tone Practice</p>
         <p style="margin: 0; font-size: 15px; max-width: 34rem; text-wrap: pretty">{{ thesisCopy }}</p>
       </div>
       <div style="display: flex; align-items: center; gap: 18px; margin: 16px 0 0; flex-wrap: wrap">
       <div style="position: relative; display: flex; flex-direction: column; align-items: center; pointer-events: none; flex-shrink: 0">
         <span ref="{{ rideRef }}" style="display: block; line-height: 0; pointer-events: none">
-          <canvas ref="{{ blopRef }}" width="120" height="120" role="img" aria-label="Blop, idle" style="width: 120px; height: 120px; display: block; pointer-events: none"></canvas>
+          <canvas ref="{{ blopRef }}" width="120" height="120" role="img" aria-label="Blop, idle" style="width: 96px; height: 96px; display: block; pointer-events: none"></canvas>
         </span>
-        <a href="Blop.dc.html" aria-label="Open VoiceMaster" style="pointer-events: auto; position: absolute; left: 50%; top: 46%; width: 120px; height: 90px; transform: translate(-50%, -50%); border: 0; padding: 0; margin: 0; background: transparent; cursor: pointer"></a>
+        <a href="Blop.dc.html" aria-label="Open VoiceMaster" style="pointer-events: auto; position: absolute; left: 50%; top: 46%; width: 96px; height: 72px; transform: translate(-50%, -50%); border: 0; padding: 0; margin: 0; background: transparent; cursor: pointer"></a>
         <p style="position: absolute; left: 50%; top: calc(100% - 2px); transform: translateX(-50%); margin: 0; max-width: 16rem; text-align: center; font-size: 13px; line-height: 1.3; color: var(--ink-3); white-space: nowrap; pointer-events: none">{{ mutter }}</p>
       </div>
       <div data-mutter="vm" style="min-width: 0; flex: 1">
-        <h4 style="margin: 0 0 6px; font-size: 15px; font-weight: 600; line-height: 1.45">
-          <a href="Blop.dc.html">VoiceMaster</a>
+        <h4 class="et">
+          <a href="Blop.dc.html">VoiceMaster <span class="arr">&#8599;</span></a><span class="st">{{ vmMeta }}</span>
         </h4>
-        <p style="margin: 0 0 8px; font-size: 13px; color: var(--ink-2)">{{ vmMeta }}</p>
         <p style="margin: 0; font-size: 15px; text-wrap: pretty">{{ vmCopy }}</p>
       </div>
       </div>
     </article>
     </section>
     <section class="tl-item">
-    <article data-mutter="paper" style="margin: 0 0 26px">
+    <article data-mutter="paper">
       <p class="tl-label" style="margin: 0 0 5px; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--warm-text)"><span class="when">{{ whenPub }}</span>{{ pubLabel }}</p>
-      <h3 style="margin: 0 0 6px; font-size: 15px; font-weight: 600; line-height: 1.45">
-        <a href="https://doi.org/10.3390/jimaging11020041">Pano-GAN: A Deep Generative Model for Panoramic Dental Radiographs</a>
+      <h3 class="et">
+        <a href="https://doi.org/10.3390/jimaging11020041">Pano-GAN: A Deep Generative Model for Panoramic Dental Radiographs <span class="arr">&#8599;</span></a>
       </h3>
       <p style="margin: 0; font-size: 13px"><span class="mark">{{ pubMeta }}</span></p>
     </article>
 
     </section>
     </div>
+    <p class="getintouch">{{ contactLabel }}: <a class="il" href="mailto:mikkeltcp@hotmail.com">mikkeltcp@hotmail.com</a> · <a class="il" href="https://www.linkedin.com/in/mikkel-chavez">LinkedIn</a> · <a class="il" href="https://github.com/MikkelTonatiuh">GitHub</a></p>
   </main>
 </div>
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1200,&quot;height&quot;:1000}}">
 class Component extends DCLogic {
-  state = { lang: "en", mutter: "", theme: "dark", gemmaRank: 80, sound: true };
+  state = { lang: "en", mutter: "", theme: "dark", gemmaRank: null, gemmaTotal: null, sound: true };
 
   COPY = {
     en: {
-      lede: "Open to internships, trainee and junior roles",
+      lede: "Data Science graduate (BSc, Aarhus University, 2026) · looking for ML or data roles around Aarhus",
       openLabel: "Open to work",
       themeDark: "Light",
       themeLight: "Dark",
@@ -331,44 +349,44 @@ class Component extends DCLogic {
       unmuteLabel: "Sound",
       muteAria: "Mute Blop",
       unmuteAria: "Sound: let Blop talk",
-      intro: "I train and ship deep learning models. Kaggle silver medal in medical imaging (top 5% of 6,299 teams, top 0.9% on its efficiency leaderboard), a published paper in Journal of Imaging, and currently rank {n} in Google DeepMind's Gemma 4 agent competition. Looking for an internship or junior role in ML or data around Aarhus.",
+      intro: "I train and ship deep learning models: a solo Kaggle silver medal in knee-MRI diagnosis, a paper in Journal of Imaging, and now a Gemma 4 coding agent in Google DeepMind's competition on Kaggle.",
       dlLabel: "my own training app",
       dlHint: "My 7-day machine workout, as an app",
-      meta: "Odder, Denmark · Danish native · English C2 · Spanish intermediate",
+      meta: "Odder, near Aarhus · Danish (native) · English (C2) · Spanish (intermediate)",
       skills: "Python, R, SQL, Java · PyTorch",
       skillsLabel: "Skills",
       thesis: "A Wav2Vec2 model that classifies short speech as calm, excited, or authoritative.",
-      vm: "Say a line after Blop and see which words were hard to hear.",
-      rsna: "Multi-plane knee MRI, twelve findings, labels from multilingual reports.",
+      vm: "A speaking-practice app that grew out of the thesis: repeat a line after Blop and it shows which words didn't come through.",
+      rsna: "A model that flags 12 kinds of knee abnormality in MRI scans, trained on labels taken from radiology reports in several languages.",
       rsnaTop: "Silver medal",
-      rsnaPre: "on the ",
-      rsnaBoardLink: "final leaderboard",
-      rsnaPost: ":",
       rsnaCount: "287th of 6,299 teams",
-      rsnaTail: "(solo).",
+      rsnaTail: "· solo, top\u00a05%",
       rsnaCert: "Certificate",
       effTop: "Top 0.9%",
       effPre: "on the ",
-      effBoardLink: "Efficiency Prize leaderboard",
-      effPost: ":",
-      effCount: "57th of 6,299 teams",
-      effTail: "(public standings).",
+      effBoardLink: "efficiency leaderboard",
+      effPost: ": ",
+      effCount: "57th of 6,299",
+      effTail: "(public leaderboard)",
       videoLabel: "3-min explainer video",
       videoSub: "How the solution works · YouTube",
       videoAlt: "Explainer video: how my knee-MRI solution works",
-      pubMeta: "Published in Journal of Imaging, 2025",
+      pubMeta: "Published in Journal of Imaging · equal author",
       edu: "Education",
       pubLabel: "Publication",
       thesisLabel: "Bachelor thesis",
       projectLabel: "Project",
       compLabel: "Competition",
-      equalAuthor: "Equal author",
       vmMeta: "In progress",
       gemmaTop: "In progress",
-      gemma: "Post-training Gemma 4 into an offline coding agent.",
+      gemma: "Training Gemma 4 to fix failing code, offline.",
       gemmaPrize: "$100K prize pool",
       gemmaBy: "Hosted by",
       gemmaBoardLink: "Rank {n}",
+      contactLabel: "Get in touch",
+      thesisExplained: "Explained",
+      gemmaBoardNone: "Leaderboard",
+      gemmaBoardOf: "Rank {n} of {t}",
       whenGemma: "Now",
       whenRsna: "Oct 2026",
       whenThesis: "2026",
@@ -376,7 +394,7 @@ class Component extends DCLogic {
       whenPub: "2025",
     },
     es: {
-      lede: "Disponible para internships, trainee y puestos junior",
+      lede: "Graduado en Data Science (BSc, Universidad de Aarhus, 2026) · busco puestos de ML o datos en la zona de Aarhus",
       openLabel: "Disponible para trabajar",
       themeDark: "Claro",
       themeLight: "Oscuro",
@@ -384,44 +402,44 @@ class Component extends DCLogic {
       unmuteLabel: "Sonido",
       muteAria: "Silenciar a Blop",
       unmuteAria: "Sonido: que Blop hable",
-      intro: "Entreno y pongo en producción modelos de deep learning. Medalla de plata en Kaggle en imagen médica (top 5 % de 6.299 equipos, top 0,9 % en su clasificación de eficiencia), un artículo publicado en Journal of Imaging, y actualmente puesto {n} en la competición de agentes Gemma 4 de Google DeepMind. Busco un internship o un puesto junior en ML o datos en la zona de Aarhus.",
+      intro: "Entreno y pongo en producción modelos de deep learning: una medalla de plata en solitario en Kaggle diagnosticando RM de rodilla, un artículo en Journal of Imaging y ahora un agente de código con Gemma 4 en la competición de Google DeepMind en Kaggle.",
       dlLabel: "mi propia app de entrenamiento",
       dlHint: "Mi rutina de 7 días con máquinas, como app",
-      meta: "Odder, Dinamarca · danés nativo · inglés C2 · español intermedio",
+      meta: "Odder, cerca de Aarhus · danés (nativo) · inglés (C2) · español (intermedio)",
       skills: "Python, R, SQL, Java · PyTorch",
       skillsLabel: "Habilidades",
       thesis: "Un modelo Wav2Vec2 que clasifica habla breve como calm, excited o authoritative.",
-      vm: "Repite una frase después de Blop y mira qué palabras costó entender.",
-      rsna: "RM de rodilla en varios planos, doce hallazgos, etiquetas desde informes multilingües.",
+      vm: "Una app para practicar el habla que nació de la tesis: repite una frase después de Blop y te muestra qué palabras no se entendieron.",
+      rsna: "Un modelo que detecta 12 tipos de anomalía de rodilla en resonancias magnéticas, entrenado con etiquetas sacadas de informes radiológicos en varios idiomas.",
       rsnaTop: "Medalla de plata",
-      rsnaPre: "en la ",
-      rsnaBoardLink: "clasificación final",
-      rsnaPost: ":",
       rsnaCount: "puesto 287 de 6.299 equipos",
-      rsnaTail: "(en solitario).",
+      rsnaTail: "· en solitario, top\u00a05\u00a0%",
       rsnaCert: "Certificado",
       effTop: "Top 0,9 %",
       effPre: "en la ",
-      effBoardLink: "clasificación del Efficiency Prize",
-      effPost: ":",
-      effCount: "puesto 57 de 6.299 equipos",
-      effTail: "(clasificación pública).",
+      effBoardLink: "clasificación de eficiencia",
+      effPost: ": ",
+      effCount: "puesto 57 de 6.299",
+      effTail: "(clasificación pública)",
       videoLabel: "Vídeo explicativo de 3 min",
       videoSub: "Cómo funciona la solución · YouTube",
       videoAlt: "Vídeo: cómo funciona mi solución de RM de rodilla",
-      pubMeta: "Publicado en Journal of Imaging, 2025",
+      pubMeta: "Publicado en Journal of Imaging · autoría compartida",
       edu: "Educación",
       pubLabel: "Publicación",
       thesisLabel: "Tesis de grado",
       projectLabel: "Proyecto",
       compLabel: "Competición",
-      equalAuthor: "Autoría compartida",
       vmMeta: "En curso",
       gemmaTop: "En curso",
-      gemma: "Postentreno Gemma 4 como agente de código offline.",
+      gemma: "Entreno Gemma 4 para arreglar código, sin conexión.",
       gemmaPrize: "100.000\u00a0$ en premios",
       gemmaBy: "Organiza",
       gemmaBoardLink: "Puesto {n}",
+      contactLabel: "Escríbeme",
+      thesisExplained: "Explicada",
+      gemmaBoardNone: "Clasificación",
+      gemmaBoardOf: "Puesto {n} de {t}",
       whenGemma: "Ahora",
       whenRsna: "oct 2026",
       whenThesis: "2026",
@@ -429,7 +447,7 @@ class Component extends DCLogic {
       whenPub: "2025",
     },
     da: {
-      lede: "Åben for internships, trainee- og juniorstillinger",
+      lede: "Uddannet i Data Science (BSc, Aarhus Universitet, 2026) · søger stillinger i ML eller data omkring Aarhus",
       openLabel: "Åben for arbejde",
       themeDark: "Lys",
       themeLight: "Mørk",
@@ -437,44 +455,44 @@ class Component extends DCLogic {
       unmuteLabel: "Lyd til",
       muteAria: "Lyd fra for Blop",
       unmuteAria: "Lyd til for Blop",
-      intro: "Jeg træner og leverer deep learning-modeller. Kaggle-sølvmedalje i medicinsk billeddiagnostik (top 5 % af 6.299 hold, top 0,9 % på dens efficiency-rangliste), en publiceret artikel i Journal of Imaging, og i øjeblikket nr. {n} i Google DeepMinds Gemma 4-agentkonkurrence. Søger internship eller en juniorstilling i ML eller data omkring Aarhus.",
+      intro: "Jeg træner og leverer deep learning-modeller: en solo Kaggle-sølvmedalje i diagnosticering af knæ-MR, en artikel i Journal of Imaging og nu en Gemma 4-kodeagent i Google DeepMinds konkurrence på Kaggle.",
       dlLabel: "min egen træningsapp",
       dlHint: "Min 7-dages maskinrutine som app",
-      meta: "Odder, Danmark · dansk indfødt · engelsk C2 · spansk på mellemniveau",
+      meta: "Odder ved Aarhus · dansk (modersmål) · engelsk (C2) · spansk (mellemniveau)",
       skills: "Python, R, SQL, Java · PyTorch",
       skillsLabel: "Kompetencer",
       thesis: "En Wav2Vec2-model der klassificerer kort tale som calm, excited eller authoritative.",
-      vm: "Sig en sætning efter Blop og se, hvilke ord der var svære at høre.",
-      rsna: "Knæ-MRI i flere planer, tolv fund, labels fra flersprogede beskrivelser.",
+      vm: "En app til taletræning, der voksede ud af bachelorprojektet: sig en sætning efter Blop, og den viser, hvilke ord der ikke kom igennem.",
+      rsna: "En model, der finder 12 slags knæforandringer på MR-scanninger, trænet på labels fra radiologibeskrivelser på flere sprog.",
       rsnaTop: "Sølvmedalje",
-      rsnaPre: "på den ",
-      rsnaBoardLink: "endelige rangliste",
-      rsnaPost: ":",
       rsnaCount: "nr. 287 af 6.299 hold",
-      rsnaTail: "(solo).",
+      rsnaTail: "· solo, top\u00a05\u00a0%",
       rsnaCert: "Certifikat",
       effTop: "Top 0,9 %",
       effPre: "på ",
-      effBoardLink: "Efficiency Prize-ranglisten",
-      effPost: ":",
-      effCount: "nr. 57 af 6.299 hold",
-      effTail: "(offentlig stilling).",
+      effBoardLink: "effektivitetsranglisten",
+      effPost: ": ",
+      effCount: "nr. 57 af 6.299",
+      effTail: "(offentlig rangliste)",
       videoLabel: "3-min. forklaringsvideo",
       videoSub: "Sådan virker løsningen · YouTube",
       videoAlt: "Video: sådan virker min knæ-MRI-løsning",
-      pubMeta: "Udgivet i Journal of Imaging, 2025",
+      pubMeta: "Udgivet i Journal of Imaging · delt forfatterskab",
       edu: "Uddannelse",
       pubLabel: "Publikation",
       thesisLabel: "Bachelorprojekt",
       projectLabel: "Projekt",
       compLabel: "Konkurrence",
-      equalAuthor: "Delt forfatterskab",
       vmMeta: "I gang",
       gemmaTop: "I gang",
-      gemma: "Eftertræner Gemma 4 som offline kodeagent.",
+      gemma: "Træner Gemma 4 til at rette fejlende kode, offline.",
       gemmaPrize: "100.000\u00a0$ i præmier",
       gemmaBy: "Arrangør",
       gemmaBoardLink: "Nr. {n}",
+      contactLabel: "Skriv til mig",
+      thesisExplained: "Forklaret",
+      gemmaBoardNone: "Rangliste",
+      gemmaBoardOf: "Nr. {n} af {t}",
       whenGemma: "Nu",
       whenRsna: "okt. 2026",
       whenThesis: "2026",
@@ -490,7 +508,7 @@ class Component extends DCLogic {
     open: [
       "open to work. the dot means it.",
       "ml engineering, near aarhus. ask.",
-      "student job or internship. both work.",
+      "internship or junior role. both work.",
       "the blinking dot is a hint.",
     ],
     theme: [
@@ -724,7 +742,7 @@ class Component extends DCLogic {
 
     /* The Gemma 4 rank as the scheduled job last read it from Kaggle (rank.json). */
     fetch("rank.json", { cache: "no-store" }).then((r) => r.json())
-      .then((d) => { if (Number.isInteger(d.gemma) && d.gemma > 0) this.setState({ gemmaRank: d.gemma }); })
+      .then((d) => { if (Number.isInteger(d.gemma) && d.gemma > 0) this.setState({ gemmaRank: d.gemma, gemmaTotal: Number.isInteger(d.total) && d.total > 0 ? d.total : null }); })
       .catch(() => {});
 
     const at = (e) => {
@@ -855,7 +873,7 @@ class Component extends DCLogic {
     const copy = this.COPY[this.state.lang];
     const on = (id) => (this.state.lang === id ? "var(--ink-hi)" : "var(--ink-3)");
     return {
-      intro: copy.intro.replace("{n}", this.state.gemmaRank),
+      intro: copy.intro,
       dlLabel: copy.dlLabel,
       skillsLabel: copy.skillsLabel,
       dlHint: copy.dlHint,
@@ -886,9 +904,6 @@ class Component extends DCLogic {
       vmCopy: copy.vm,
       rsnaCopy: copy.rsna,
       rsnaTop: copy.rsnaTop,
-      rsnaPre: copy.rsnaPre,
-      rsnaBoardLink: copy.rsnaBoardLink,
-      rsnaPost: copy.rsnaPost,
       rsnaCount: copy.rsnaCount,
       rsnaTail: copy.rsnaTail,
       rsnaCert: copy.rsnaCert,
@@ -907,13 +922,19 @@ class Component extends DCLogic {
       thesisLabel: copy.thesisLabel,
       projectLabel: copy.projectLabel,
       compLabel: copy.compLabel,
-      equalAuthor: copy.equalAuthor,
       vmMeta: copy.vmMeta,
       gemmaTop: copy.gemmaTop,
       gemmaCopy: copy.gemma,
       gemmaPrize: copy.gemmaPrize,
       gemmaBy: copy.gemmaBy,
-      gemmaBoardLink: copy.gemmaBoardLink.replace("{n}", this.state.gemmaRank),
+      /* The rank and the field it is in, as the scheduled job last read them; no
+         number at all until rank.json has loaded, so a stale one never shows. */
+      gemmaBoardLink: this.state.gemmaRank == null ? copy.gemmaBoardNone
+        : (this.state.gemmaTotal ? copy.gemmaBoardOf : copy.gemmaBoardLink)
+          .replace("{n}", this.state.gemmaRank)
+          .replace("{t}", (this.state.gemmaTotal || 0).toLocaleString(this.state.lang === "en" ? "en" : "da")),
+      thesisExplained: copy.thesisExplained,
+      contactLabel: copy.contactLabel,
       whenGemma: copy.whenGemma,
       whenRsna: copy.whenRsna,
       whenThesis: copy.whenThesis,
