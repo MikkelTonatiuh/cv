@@ -222,6 +222,24 @@
   @media (any-hover: none) {
     .snd { display: none; }
   }
+  .print-contact { display: none; }
+  /* Printed (tools/print-cv.mjs, or the browser's own print): one A4 page on
+     white, everything in its finished state, links kept. */
+  @media print {
+    @page { size: A4; margin: 10mm 12mm 9mm 7mm; }
+    :root { --bg: #FFFFFF !important; }
+    html, body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    [data-controls], .topo, .mut, :has(> .blop), .tl-ring, .skills .caret { display: none !important; }
+    main { max-width: none !important; margin: 0 !important; padding: 0 0 0 96px !important; }
+    .print-contact { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 0 0 12px; font-size: 13px; }
+    .print-contact a { color: var(--ink); }
+    .pf-col { margin-top: -30px !important; }
+    .pf-col .contact { display: none; }
+    .tl-item > article { margin-bottom: 18px !important; }
+    .acts { margin: 8px 0 8px; }
+    .gx, .act, .mark, .gx-band, .gx-term { break-inside: avoid; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
   @media (prefers-reduced-motion: reduce) {
     .tl-ring, .gx-caret { animation: none; }
     .gx-screen { transition: none; }
@@ -234,7 +252,7 @@
 
 <div style="min-height: 100vh; background: transparent; color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-size: 15px; font-weight: 400; line-height: 1.55; box-sizing: border-box; position: relative">
 
-  <svg ref="{{ topoRef }}" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; z-index: 0; pointer-events: none"></svg>
+  <svg class="topo" ref="{{ topoRef }}" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; z-index: 0; pointer-events: none"></svg>
 
   <div data-controls="true" style="position: absolute; top: 20px; right: 22px; display: flex; align-items: center; gap: 22px; z-index: 2">
     <div data-mutter="open" style="display: flex; align-items: center; gap: 7px; flex-shrink: 0">
@@ -259,6 +277,7 @@
     </h1>
 
     <p class="sub" data-mutter="meta">{{ meta }}</p>
+    <p class="print-contact"><a href="mailto:mikkeltcp@hotmail.com">mikkeltcp@hotmail.com</a> <a href="https://www.linkedin.com/in/mikkel-chavez">linkedin.com/in/mikkel-chavez</a> <a href="https://mikkeltonatiuh.github.io/voicemaster-rendering/">Live CV</a></p>
     <div class="pf-col">
       <span class="pf" ref="{{ portraitRef }}"></span>
       <span class="pf-cap">{{ degreeCap }}</span>
@@ -326,7 +345,7 @@
       </div>
       <div style="display: flex; align-items: center; gap: 18px; margin: 16px 0 0; flex-wrap: wrap">
       <div style="position: relative; display: flex; flex-direction: column; align-items: center; pointer-events: none; flex-shrink: 0">
-        <span ref="{{ rideRef }}" style="display: block; line-height: 0; pointer-events: none">
+        <span class="blop" ref="{{ rideRef }}" style="display: block; line-height: 0; pointer-events: none">
           <canvas ref="{{ blopRef }}" width="120" height="120" role="img" aria-label="Blop, idle" style="width: 96px; height: 96px; display: block; pointer-events: none"></canvas>
         </span>
         <a href="Blop.dc.html" aria-label="Open VoiceMaster" style="pointer-events: auto; position: absolute; left: 50%; top: 46%; width: 96px; height: 72px; transform: translate(-50%, -50%); border: 0; padding: 0; margin: 0; background: transparent; cursor: pointer"></a>
