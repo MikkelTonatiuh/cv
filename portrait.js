@@ -1,9 +1,3 @@
-/* The portrait in the header comes out of noise the way a diffusion model's
-   sample does: Gaussian noise at t = T, the photo at t = 0, on the cosine
-   schedule x_t = sqrt(ā_t)·x0 + sqrt(1 − ā_t)·ε. The noise is drawn once and
-   partly refreshed every step, and the photo under it starts coarse and gains
-   detail as t falls, so it sharpens out of the noise rather than fading in.
-   Whatever goes wrong, the photo itself ends up showing. */
 
 const N = 192;
 const L = N * N * 3;
@@ -29,9 +23,6 @@ export function mountPortrait(host, { delay = 200, duration = 2800 } = {}) {
   canvas.setAttribute("aria-hidden", "true");
   host.append(canvas, photo);
 
-  /* Like the name above it, the reveal plays once on every device. With reduced
-     motion asked for it is calmer: the noise holds still until it starts, and the
-     reveal takes half as many, slower steps. */
   const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const steps = calm ? 24 : 60;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -46,8 +37,6 @@ export function mountPortrait(host, { delay = 200, duration = 2800 } = {}) {
   photo.style.transition = "opacity 0.3s ease-out";
   const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; go(); });
 
-  /* The end, once: the photo fades in over the last frame, and only then does
-     the canvas go, so the circle never blinks empty. */
   const show = () => {
     if (shown) return;
     shown = true;
@@ -57,15 +46,12 @@ export function mountPortrait(host, { delay = 200, duration = 2800 } = {}) {
     photo.style.opacity = "1";
     setTimeout(() => { canvas.style.visibility = "hidden"; }, 350);
   };
-  /* No photo: leave a plain disc rather than a broken image and its alt text. */
   photo.addEventListener("error", () => {
     show();
     photo.style.display = "none";
     canvas.style.visibility = "hidden";
   });
 
-  /* One pool of Gaussian noise, read at a different offset for each step's
-     fresh draw: cheap enough for a phone, and still uncorrelated step to step. */
   const pool = gauss(L + 7919);
   const eps = pool.slice(0, L);
   const frame = ctx.createImageData(N, N);
@@ -85,8 +71,6 @@ export function mountPortrait(host, { delay = 200, duration = 2800 } = {}) {
   };
   paint(null, 0, 1);
 
-  /* While the photo is on its way the noise keeps moving, so it reads as a
-     sampler warming up rather than a stuck image. */
   let lastIdle = 0;
   const tick = (now) => {
     if (!alive || started || shown || calm) return;
@@ -97,7 +81,6 @@ export function mountPortrait(host, { delay = 200, duration = 2800 } = {}) {
 
   const run = () => {
     try {
-      /* x0 at each level of detail, scaled back up to N, in [-1, 1]. */
       const scratch = document.createElement("canvas");
       const sctx = scratch.getContext("2d");
       const big = document.createElement("canvas");
@@ -116,8 +99,6 @@ export function mountPortrait(host, { delay = 200, duration = 2800 } = {}) {
         }
         return x;
       });
-      /* Progress counts frames' time but at most 64 ms of it per frame, so when
-         something else holds the page up the reveal pauses instead of skipping. */
       let prev = performance.now(), elapsed = 0, last = -1;
       const step = () => {
         if (!alive || shown) return;
@@ -129,8 +110,6 @@ export function mountPortrait(host, { delay = 200, duration = 2800 } = {}) {
           const k = Math.floor(p * steps);
           if (k !== last) {
             last = k;
-            /* Cosine schedule, ā(t) = cos²(π/2 · (t + s) / (1 + s)), from t = 0.9 to 0:
-               the very top of the schedule is static with nothing in it yet. */
             const t = 0.9 * (1 - p), s = 0.008;
             const ab = Math.cos((Math.PI / 2) * (t + s) / (1 + s)) ** 2;
             const level = Math.min(levels.length - 1, Math.floor(Math.pow(p, 0.8) * levels.length));
@@ -154,7 +133,6 @@ export function mountPortrait(host, { delay = 200, duration = 2800 } = {}) {
     started = true;
     cancelAnimationFrame(idle);
     timer = setTimeout(run, delay);
-    /* If the reveal has not finished well after it should have, show the photo. */
     guard = setTimeout(show, delay + duration * 4 + 2000);
   }
   photo.addEventListener("load", go);

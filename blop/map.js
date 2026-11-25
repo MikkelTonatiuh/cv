@@ -1,5 +1,3 @@
-/* Turns a take's result into what the board shows and how Blop feels about it:
-   clear words make Blop happy, a few hard ones leave it unsure, a lot of them make it think. */
 function voiceCopy(s) {
   return String(s || "")
     .replace(/\s+/g, " ")

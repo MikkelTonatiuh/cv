@@ -1,24 +1,3 @@
-/* Replays recorded takes through blop/turn.js the way the page feeds it (about 60 level readings a second) and
-   reports how often the take would have been ended before the speaker was done, and how long the board takes to
-   come up after the last word. This is how the settings in blop/turn.js were chosen.
-
-   The takes are the adult recordings of the speechocean762 test set (Apache-2.0): a folder of u<id>.wav files and
-   a meta.json with { id, text, words, syl (syllables in the text), fluency }. The score file holds, for every pause
-   of 0.4 s or more in a take and for its end, the word scores the model gives the take up to that point plus half
-   a second of quiet: { "<id>": [{ at: seconds, w: [word score, ...] }] } (the model is run as in
-   blop/clarity.worker.js, once per cut of the take).
-
-   Run from anywhere (Node 18+):
-     node tools/turn-replay.mjs <takes_folder> --sweep
-         fixed quiet of 0.5 to 2 s, then the quiet-and-length rule without the word model
-     node tools/turn-replay.mjs <takes_folder> --tails <scores.json> [--latency 1] [--score 1]
-         the rule as shipped; latency is how long the model takes to score a take, score how long scoring takes
-         when it starts only once the take has ended (seconds)
-     node tools/turn-replay.mjs <takes_folder> --peek oracle
-         the ceiling: a perfect answer to "has the learner finished?"
-   Other options: --rate (syllables per second of the model voice, 4.6), --tailcut (-2), --fixed <s>, --limit <n>,
-   and any setting of blop/turn.js by name (--peekAt 0.5, --holdMin 1.4, --quietMax 1.8, ...).
-   A real room: --snr <dB> --wobble <dB> --bursts <dB> --agc <dB> --zeros <s> --voicing (see below). */
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -33,7 +12,7 @@ if (!dir || dir.startsWith("--")) { console.error("usage: node tools/turn-replay
 const opt = (name, def) => { const i = args.indexOf("--" + name); return i < 0 ? def : args[i + 1]; };
 const flag = (name) => args.includes("--" + name);
 
-const SR = 16000, WIN = 341, HOP = 267;   /* 21 ms windows, 60 a second, like the page's analyser */
+const SR = 16000, WIN = 341, HOP = 267;
 const meta = JSON.parse(fs.readFileSync(path.join(dir, "meta.json"), "utf8"));
 const limit = +opt("limit", 0);
 
@@ -52,7 +31,6 @@ function readWav(file) {
   throw new Error("no data chunk in " + file);
 }
 
-/* what the speaker really did: the engine's voice activity over the whole take (cached next to the takes) */
 const truthFile = path.join(dir, "truth.json");
 const truth = fs.existsSync(truthFile) ? JSON.parse(fs.readFileSync(truthFile, "utf8")) : {};
 const clips = [];
@@ -72,13 +50,6 @@ for (const m of meta) {
 }
 if (dirty) fs.writeFileSync(truthFile, JSON.stringify(truth));
 
-/* A real room is noisier than these takes. --snr adds white noise that far (in dB) below the take's loudest
-   speech, --wobble makes its level swing that many dB up and down once or twice a second (a fan, typing),
-   --bursts adds bursts of noise that far below the speech, 0.1 to 0.25 s long about every second (a mic's noise
-   suppression pumping), --agc makes the room get that many dB louder over the two seconds after the speech
-   ends (a driver's gain coming back up), and --zeros starts the take with that many seconds of digital silence,
-   which is what the page's analyser reads in the moments after the mic opens. --voicing also gives the rule what
-   the page gives it: whether the last 43 ms were voiced (voice/engine.js livePitch). */
 const SNR = opt("snr", null) === null ? null : +opt("snr");
 const ZEROS = +opt("zeros", 0);
 const WOBBLE = +opt("wobble", 0);
@@ -88,7 +59,6 @@ const VOICING = flag("voicing");
 const VWIN = Math.round(SR * 0.043);
 const randn = () => (Math.random() + Math.random() + Math.random() - 1.5) * 2;
 
-/* the take, then a quiet tail made from its own quietest stretch, then the room's noise on top */
 function signal(x, t) {
   const seg = 1600;
   let best = Infinity, at = 0;
@@ -127,7 +97,6 @@ function signal(x, t) {
   return y;
 }
 
-/* level readings as the analyser gives them (and whether the last 43 ms were voiced) */
 function frames(y) {
   const out = [];
   for (let end = HOP; end <= y.length; end += HOP) {
@@ -138,7 +107,6 @@ function frames(y) {
     if (VOICING) voiced = end >= VWIN && VE.livePitch(y.subarray(end - VWIN, end), SR) > 0;
     out.push([end / SR + ZEROS, 20 * Math.log10(Math.sqrt(s / (end - from)) + 1e-9), voiced]);
   }
-  /* the analyser reads zeros until the first audio arrives */
   const zeros = [];
   for (let t = HOP / SR; t <= ZEROS; t += HOP / SR) zeros.push([t, -180, false]);
   return zeros.concat(out);
@@ -148,7 +116,6 @@ const tailsFile = opt("tails", null);
 const TAILS = tailsFile ? JSON.parse(fs.readFileSync(tailsFile, "utf8")) : null;
 const TAILCUT = +opt("tailcut", TAIL);
 
-/* what the model made of the take up to time tl: the scores recorded for the nearest pause */
 function said(c, tl, o) {
   if (o.peek === "oracle") return c.t.end - tl < 0.25;
   const rows = TAILS[c.m.id];
@@ -181,7 +148,6 @@ function evaluate(label, config, o) {
   const rows = clips.map((c) => {
     const r = replay(c, config, o);
     const late = r.fire - c.t.end;
-    /* from the last word to the board: the scoring has already run when the model scored the whole take */
     return { flu: c.m.fluency, late, board: late + (r.spec ? 0 : o.score), reason: r.reason, cut: late < -0.15, lost: Math.max(0, -late) };
   });
   const cut = rows.filter((r) => r.cut), kept = rows.filter((r) => !r.cut);

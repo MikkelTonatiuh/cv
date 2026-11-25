@@ -1,28 +1,14 @@
-/* voice/engine.js
-   VoiceMaster's measurement engine. It runs entirely in the browser, so the recording never leaves the device.
-
-   analyze(pcm, sampleRate)  pitch (YIN), loudness, voice activity, pauses, syllable rate and phrase endings
-   judge(analysis, tone)     compares those measurements with target ranges for calm / excited / authoritative
-                             and writes the score, headline and tips
-   capture(ctx, source, cb)  records raw microphone samples (AudioWorklet, with a ScriptProcessor fallback)
-   livePitch(buffer, sr)     quick pitch estimate for the live trace while recording
-   synth(tone, seconds)      a speech-like test signal, used for the no-microphone demo and the tests
-
-   The target ranges are starting points drawn from prosody research (more energy means faster, wider-pitched,
-   more strongly stressed speech; authority leans on steady pace and falling sentence endings). They should be
-   recalibrated once real practice takes are available. */
 (function (root) {
   "use strict";
 
-  const SR = 8000;              // analysis rate: pitch and syllables need nothing above 4 kHz
-  const HOP = 80;               // 10 ms between frames
-  const WIN = 200;              // 25 ms loudness window
-  const FMIN = 65, FMAX = 400;  // speaking pitch range, Hz
-  const YIN_THR = 0.15;         // YIN dip threshold (lower = stricter about calling a frame voiced)
-  const MAX_AP = 0.35;          // frames less periodic than this count as unvoiced (CREMA-D speech: 0.35 keeps about 60% of speech frames voiced)
-  const WEAK_AP = 0.55;         // ...unless they are at least this periodic and continue a voiced neighbour's pitch
+  const SR = 8000;
+  const HOP = 80;
+  const WIN = 200;
+  const FMIN = 65, FMAX = 400;
+  const YIN_THR = 0.15;
+  const MAX_AP = 0.35;
+  const WEAK_AP = 0.55;
 
-  /* ---------- small helpers ---------- */
   const sum = (a) => { let s = 0; for (const v of a) s += v; return s; };
   const mean = (a) => (a.length ? sum(a) / a.length : NaN);
   const std = (a) => {
@@ -42,7 +28,6 @@
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const st = (f, ref) => 12 * Math.log2(f / ref);
 
-  /* ---------- resampling: anti-aliased decimation to the analysis rate ---------- */
   function lowpass(M) {
     const N = 8 * M + 1, K = (N - 1) / 2, fc = 0.45 / M;
     const h = new Float64Array(N);
@@ -90,7 +75,6 @@
     return decimate(linear(x, srIn, srOut * M), M);
   }
 
-  /* high-pass at ~50 Hz removes DC and rumble that would confuse the pitch tracker */
   function highpass(x, sr) {
     const rc = 1 / (2 * Math.PI * 50), dt = 1 / sr, a = rc / (rc + dt);
     const y = new Float32Array(x.length);
@@ -103,7 +87,6 @@
     return y;
   }
 
-  /* ---------- pitch: YIN (de Cheveigné & Kawahara, 2002) ---------- */
   function yin(x, start, W, sr, d, c) {
     const tauMin = Math.max(2, Math.floor(sr / FMAX)), tauMax = Math.ceil(sr / FMIN);
     if (start + W + tauMax >= x.length) return { f0: 0, ap: 1 };
@@ -130,8 +113,6 @@
       }
     }
     if (tau < 0) {
-      /* no dip under the threshold: take the deepest one, as YIN does, and let MAX_AP decide whether the
-         frame is voiced. Real rooms and mics rarely give dips under YIN_THR */
       tau = tauMin;
       for (let t = tauMin + 1; t <= tauMax; t += 1) if (c[t] < c[tau]) tau = t;
     }
@@ -143,7 +124,6 @@
     return { f0: sr / t, ap: c[tau] };
   }
 
-  /* ---------- loudness frames and voice activity ---------- */
   function loudness(x) {
     const n = Math.max(0, Math.floor((x.length - WIN) / HOP) + 1);
     const db = new Float64Array(n);
@@ -195,11 +175,10 @@
     return out;
   }
 
-  /* ---------- the analysis ---------- */
   function analyze(pcm, sampleRate, opts) {
-    const minVoiced = opts && opts.minVoiced != null ? opts.minVoiced : 2;   /* seconds of voiced speech needed to judge */
+    const minVoiced = opts && opts.minVoiced != null ? opts.minVoiced : 2;
     const raw = resample(pcm, sampleRate || SR, SR);
-    for (let i = 0; i < raw.length; i += 1) if (!Number.isFinite(raw[i])) raw[i] = 0;   /* one NaN would poison the filters */
+    for (let i = 0; i < raw.length; i += 1) if (!Number.isFinite(raw[i])) raw[i] = 0;
     let clipped = 0;
     for (let i = 0; i < pcm.length; i += 1) if (Math.abs(pcm[i]) > 0.99) clipped += 1;
     const x = highpass(raw, SR);
@@ -209,14 +188,12 @@
     const base = { seconds, clipped: pcm.length ? clipped / pcm.length : 0 };
     if (n < 50) return { ...base, ok: false, reason: "short", speechSeconds: 0, voicedSeconds: 0, track: null };
 
-    /* voice activity: frames clearly above the background */
     const floor = quantile(db, 0.1), peak = quantile(db, 0.99), range = peak - floor;
     const thr = Math.max(floor + clamp(range * 0.25, 6, 12), peak - 40);
     const speech = Array.from(db, (v) => v > thr);
     fillGaps(speech, 12);
     dropShort(speech, 6);
 
-    /* pitch per frame, only where there is speech */
     const W = WIN, tauMax = Math.ceil(SR / FMIN);
     const dBuf = new Float64Array(tauMax + 2), cBuf = new Float64Array(tauMax + 2);
     const f0 = new Float64Array(n), ap = new Float64Array(n), cand = new Float64Array(n);
@@ -227,8 +204,6 @@
       f0[i] = r.ap < MAX_AP ? r.f0 : 0;
       ap[i] = r.ap;
     }
-    /* creaky, breathy or noisy voicing dips less deep but keeps a steady pitch: a weakly periodic frame
-       that continues its voiced neighbour's pitch (within 1.5 semitones) is voiced too. Noise jumps around */
     for (const dir of [1, -1]) {
       for (let k = 1; k < n; k += 1) {
         const i = dir > 0 ? k : n - 1 - k, j = i - dir;
@@ -236,7 +211,6 @@
         if (Math.abs(st(cand[i], f0[j])) < 1.5) f0[i] = cand[i];
       }
     }
-    /* octave clean-up around the speaker's median, then a 5-frame median filter */
     const rawVoiced = [];
     for (let i = 0; i < n; i += 1) if (f0[i] > 0) rawVoiced.push(f0[i]);
     const med0 = median(rawVoiced);
@@ -270,13 +244,11 @@
     if (range < 12) return { ...base, ok: false, reason: "noisy", speechSeconds, voicedSeconds, track };
     if (voicedSeconds < minVoiced) return { ...base, ok: false, reason: "little", speechSeconds, voicedSeconds, track };
 
-    /* pitch variety in semitones around the speaker's own median, so voice height does not matter */
     const pitchHz = median(voicedHz);
     const semis = voicedHz.map((f) => st(f, pitchHz));
     const pitchSd = std(semis);
     const pitchSpan = quantile(semis, 0.9) - quantile(semis, 0.1);
 
-    /* pauses: silences of 250 ms or more between the first and last word */
     const first = speechRuns[0][0], last = speechRuns[speechRuns.length - 1][1];
     const pauses = [];
     for (let k = 1; k < speechRuns.length; k += 1) {
@@ -287,7 +259,6 @@
     const pauseTime = sum(pauses.map((p) => p.dur));
     const pauseShare = span > 0 ? pauseTime / span : 0;
 
-    /* syllable nuclei: voiced loudness peaks separated by a 2 dB dip (after de Jong & Wempe, 2009) */
     const sm = smooth(db, 5);
     const spVals = [];
     for (let i = 0; i < n; i += 1) if (speech[i]) spVals.push(sm[i]);
@@ -313,7 +284,6 @@
     const pace = speechSeconds > 0 ? nuclei.length / speechSeconds : 0;
     const stressSd = nuclei.length > 2 ? std(nuclei.map((i) => sm[i])) : 0;
 
-    /* phrase endings: pitch change over the last half second before each pause and at the end */
     const endings = { falling: 0, level: 0, rising: 0, n: 0 };
     const ends = pauses.map((p) => Math.round(p.at * 100)).concat([last]);
     for (const e of ends) {
@@ -329,7 +299,6 @@
       else endings.level += 1;
     }
 
-    /* how far apart the loud and the quiet parts of the speech are: emphatic and angry voices swing wide */
     const speechDb = [];
     for (let i = 0; i < n; i += 1) if (speech[i]) speechDb.push(db[i]);
     const loudRange = quantile(speechDb, 0.9) - quantile(speechDb, 0.1);
@@ -353,7 +322,6 @@
     };
   }
 
-  /* ---------- judging a take against a target tone ---------- */
   const METRICS = {
     pitch:   { label: "Pitch variety", unit: "st", digits: 1, min: 0, max: 7, tol: 1.0, get: (a) => a.pitchSd },
     pace:    { label: "Pace", unit: "syllables/s", digits: 1, min: 2, max: 7, tol: 0.8, get: (a) => a.pace },
@@ -368,14 +336,12 @@
     authoritative: { pitch: [1.8, 3.6], pace: [3.8, 5.0], stress: [2.5, 5.5], pauses: [0.1, 0.25], endings: [0.7, 1] },
   };
 
-  /* a measurement in its range earns full credit; any miss earns at most 60%, fading to 0 */
   function part(v, band, tol) {
     if (!Number.isFinite(v)) return NaN;
     if (v >= band[0] && v <= band[1]) return 1;
     const dist = v < band[0] ? band[0] - v : v - band[1];
     return 0.6 * clamp(1 - dist / (1.5 * tol), 0, 1);
   }
-  /* judge the value as it is displayed, so "20%" is never called below a 20% target */
   const shown = (key, v) => {
     if (!Number.isFinite(v)) return v;
     return METRICS[key].unit === "%" ? Math.round(v * 100) / 100 : Math.round(v * 10) / 10;
@@ -484,10 +450,6 @@
     return { ok: true, tone, score, best, all, headline, feedback, tips, rows };
   }
 
-  /* ---------- comparing a take with an example recording ---------- */
-  /* the melody of a take: voiced pitch in semitones around the speaker's own median, so a deep and a
-     high voice can be compared by shape alone. grid is the same melody on GRID steps of the line's own
-     time (unvoiced stretches bridged), so a slower or faster take still lines up with the example */
   const GRID = 60, WARP = 3;
   function melody(a) {
     const tr = a.track, n = tr.f0.length;
@@ -513,9 +475,6 @@
     for (let j = prev + 1; j < GRID; j += 1) grid[j] = prev < 0 ? 0 : grid[prev];
     return { pts, grid, span: Math.max(0, last - first) / 100 };
   }
-  /* the average semitone gap between two melodies once lined up. The time warp may move each moment
-     by at most WARP steps (5% of the line): enough for a human's uneven timing, too little to bend one
-     sentence's melody into another's */
   function shapeGap(A, B) {
     const ma = mean(A), mb = mean(B), n = GRID;
     const a = A.map((v) => v - ma), b = B.map((v) => v - mb);
@@ -534,15 +493,12 @@
     }
     return D[n][n] / Math.max(1, L[n][n]);
   }
-  /* mean pitch of a melody over a stretch of normalised time */
   function meanOver(pts, a, b) {
     const v = pts.filter((p) => p[0] >= a && p[0] < b).map((p) => p[1]);
     return v.length ? mean(v) : NaN;
   }
 
   const miss = (dist, width) => 0.6 * clamp(1 - dist / width, 0, 1);
-  /* a melody within this many semitones of the example counts as the same melody. Copies of the example
-     land under 0.3 and the other example lines over 0.65; the room in between is for human imitation */
   const SHAPE_OK = 0.8;
 
   function compare(model, user) {
@@ -555,12 +511,8 @@
     const pM = model.pauses.length, pU = user.pauses.length;
     const loudM = model.loudRange, loudU = user.loudRange, loud = loudU / Math.max(1, loudM);
 
-    /* The weights come from scoring 2,484 CREMA-D takes by other actors against the examples
-       (tools/crema-d-examples.mjs --calibrate): melody shape and loudness range tell the tones apart best.
-       Pauses only count when the example or the take has one. */
     const W = { shape: 0.4, loudness: 0.3, size: 0.15, timing: 0.15 };
     const parts = {
-      /* credit runs out 4 semitones off: other actors saying the line their own way sit about 1.7 off */
       shape: gap <= SHAPE_OK ? 1 : miss(gap - SHAPE_OK, 3.2),
       loudness: loud >= 0.8 && loud <= 1.25 ? 1 : miss(loud < 0.8 ? 0.8 - loud : loud - 1.25, 0.5),
       size: ratio >= 0.75 && ratio <= 1.35 ? 1 : miss(ratio < 0.75 ? 0.75 - ratio : ratio - 1.35, 0.6),
@@ -606,7 +558,6 @@
         ? "The example pauses " + pM + (pM === 1 ? " time" : " times") + "; you paused " + pU + ". Leave a clear half-second gap where the example does."
         : "You paused " + pU + (pU === 1 ? " time" : " times") + "; the example only " + pM + ". Keep the words of each phrase together.";
     }
-    /* the misses that cost the most points come first */
     const weakest = Object.keys(parts).filter((k) => parts[k] < 1).sort((p, q) => W[q] * (1 - parts[q]) - W[p] * (1 - parts[p]));
     const tips = weakest.slice(0, 2).map(tipFor);
     const focus = weakest.length ? LABEL[weakest[0]] + " is the thing to fix." : "";
@@ -635,7 +586,6 @@
     };
   }
 
-  /* ---------- live pitch for the trace while recording ---------- */
   let liveD = null, liveC = null;
   function livePitch(buf, sr) {
     const M = Math.max(1, Math.round(sr / SR)), srEff = sr / M;
@@ -656,7 +606,6 @@
     return r.ap < MAX_AP ? r.f0 : 0;
   }
 
-  /* ---------- microphone capture ---------- */
   const WORKLET = [
     "class VMRec extends AudioWorkletProcessor {",
     "  constructor() { super(); this.buf = new Float32Array(4096); this.n = 0; }",
@@ -684,14 +633,14 @@
         node.port.onmessage = (e) => onChunk(e.data);
         source.connect(node);
         node.connect(mute);
-        return { stop() { try { node.port.onmessage = null; source.disconnect(node); node.disconnect(); mute.disconnect(); } catch (e) { /* already closed */ } } };
-      } catch (e) { /* fall back to ScriptProcessor below */ }
+        return { stop() { try { node.port.onmessage = null; source.disconnect(node); node.disconnect(); mute.disconnect(); } catch (e) {} } };
+      } catch (e) {}
     }
     const sp = ctx.createScriptProcessor(4096, 1, 1);
     sp.onaudioprocess = (e) => onChunk(new Float32Array(e.inputBuffer.getChannelData(0)));
     source.connect(sp);
     sp.connect(mute);
-    return { stop() { try { sp.onaudioprocess = null; source.disconnect(sp); sp.disconnect(); mute.disconnect(); } catch (e) { /* already closed */ } } };
+    return { stop() { try { sp.onaudioprocess = null; source.disconnect(sp); sp.disconnect(); mute.disconnect(); } catch (e) {} } };
   }
   function join(chunks) {
     let n = 0;
@@ -702,7 +651,6 @@
     return out;
   }
 
-  /* ---------- a speech-like test signal ---------- */
   function rng(seed) {
     let a = seed >>> 0;
     return () => {
@@ -722,7 +670,6 @@
     Object.assign(P, opts);
     const sr = opts.sr || SR, n = Math.round((seconds || 12) * sr);
     const r = rng(opts.seed || 7);
-    /* lay out syllables: onset time, length, pitch target (semitones), loudness */
     const syl = [];
     let t = 0.4, k = 0, phrase = 0;
     while (t < (seconds || 12) - 0.6) {

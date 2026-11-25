@@ -1,9 +1,7 @@
-/* demos-signal.js: chapter 3, from raw audio to model-ready input (3.1 to 3.11). */
 (function () {
   'use strict';
   const s = K.s, h = K.h;
 
-  /* ---------- synthetic voice (harmonics shaped by vowel formants) ---------- */
   K.voice = function (sr, dur, o) {
     o = o || {};
     const n = Math.max(1, Math.round(sr * dur));
@@ -35,13 +33,11 @@
     if (m > 0) for (let i = 0; i < n; i++) out[i] *= 0.9 / m;
     return out;
   };
-  /* flat-topped syllable envelope */
   K.syll = (list) => (t) => {
     let e = 0;
     for (const [c, w] of list) e = Math.max(e, Math.exp(-Math.pow((t - c) / w, 6)));
     return e;
   };
-  /* min/max envelope path of a long signal, for drawing at pixel resolution */
   K.envPath = function (sig, sr, x, y, t0, t1) {
     const px0 = Math.floor(x(t0)), px1 = Math.ceil(x(t1));
     const top = [], bot = [];
@@ -58,7 +54,6 @@
   };
   const stdOf = (a) => { let m = 0; for (const v of a) m += v; m /= a.length; let q = 0; for (const v of a) q += (v - m) ** 2; return [m, Math.sqrt(q / a.length)]; };
 
-  /* ======================= 3.1 sampling ======================= */
   K.demo({
     id: 'sampling', sec: '3.1', title: 'From sound to numbers', page: 10, y: 0.517, also: [[13, 0.728]],
     hint: 'Slide the tone past fₛ/2.',
@@ -96,7 +91,6 @@
           g.append(s('circle', { cx: px, cy: y(v), r: 3.5, class: 'f-t1 ring' }));
         }
         F.add(g);
-        /* frequency ruler, log scale */
         const ry = H - 64;
         const rx = K.scale(Math.log10(50), Math.log10(22050), m.l, W - m.r);
         const X = (hz) => rx(Math.log10(hz));
@@ -128,12 +122,10 @@
     math: [String.raw`t_i = \frac{i}{\class{tt2}{f_s}}, \qquad f_{\max} = \frac{\class{tt2}{f_s}}{2}`],
   });
 
-  /* ======================= 3.2 labels ======================= */
   K.demo({
     id: 'labels', sec: '3.2', title: 'Three buckets from eight emotions', page: 11, y: 0.525,
     hint: 'Switch the vertical axis to dominance.',
     build(api) {
-      /* approximate pleasure / arousal / dominance positions (Mehrabian-style PAD ratings) */
       const E = [
         ['neutral', 0, 0.0, 0.0, 0.0], ['calm', 0, 0.68, -0.46, 0.06], ['sad', 0, -0.63, -0.27, -0.33],
         ['happy', 1, 0.81, 0.51, 0.46], ['surprised', 1, 0.4, 0.67, -0.13], ['fearful', 1, -0.64, 0.6, -0.43],
@@ -188,7 +180,6 @@
     source: 'Positions are approximate, from published pleasure–arousal–dominance ratings of each emotion word.',
   });
 
-  /* ======================= 3.3 class weights ======================= */
   K.demo({
     id: 'weights', sec: '3.3', title: 'Class weights', page: 12, y: 0.682, also: [[29, 0.502]],
     hint: 'Drag a class size.',
@@ -225,7 +216,6 @@
         }
         const tall = narrow ? y1 + 3 * (rowH + gap) + 6 : y0 + 3 * (rowH + gap) + 6;
         if (F.H !== tall) { F.H = tall; F.svg.setAttribute('height', tall); F.svg.setAttribute('viewBox', '0 0 ' + W + ' ' + tall); }
-        /* one fraction per class, in its colour, then the total every class ends up with */
         api.eq.set([
           String.raw`w_c = \frac{n}{k\,n_c}: \qquad ` + n.map((v, i) => String.raw`\frac{${K.tn(N)}}{3 \cdot \class{${TC[i]}}{${K.tn(v)}}} = \class{${TC[i]}}{${K.f(w[i], 2)}}`).join(String.raw`\qquad `),
           String.raw`n_c\, w_c = \frac{n}{k} = ${K.tn(N / k)} \;\text{ for every class}`,
@@ -236,7 +226,6 @@
     },
   });
 
-  /* ======================= 3.5 time stretching ======================= */
   K.demo({
     id: 'timestretch', sec: '3.5', title: 'Time stretching', page: 14, y: 0.592,
     hint: 'Drag r and compare the two 20 ms zooms.',
@@ -289,7 +278,6 @@
     },
   });
 
-  /* ======================= 3.6a STFT ======================= */
   const SR6 = 8000;
   const f0_6 = (t) => 125 + 60 * Math.exp(-(((t - 0.3) / 0.12) ** 2)) + 35 * Math.exp(-(((t - 0.72) / 0.08) ** 2));
   const env6 = K.syll([[0.265, 0.19], [0.735, 0.18]]);
@@ -371,7 +359,6 @@
         bottomG.append(s('path', { d: K.path(pP), class: 'ln s-t2', 'stroke-width': 1.5 }));
         bottomG.append(K.label(xa(-win / 2), top + bh + 15, '−' + win / 2 + ' ms', 'tick'));
         bottomG.append(K.label(xa(win / 2), top + bh + 15, '+' + win / 2 + ' ms', 'tick', 'end'));
-        /* spectrum of the window, zero-padded */
         const NF = 2048, re = new Float64Array(NF), im = new Float64Array(NF);
         for (let i = 0; i < N; i++) re[i] = (sig[a + i] || 0) * g[i];
         K.fft(re, im);
@@ -392,7 +379,6 @@
           const need = top2 + bh + 26;
           if (F.H !== need) { F.H = need; F.svg.setAttribute('height', need); F.svg.setAttribute('viewBox', '0 0 ' + W + ' ' + need); }
         }
-        /* spacing between harmonic peaks (median gap) */
         const peaks = [];
         for (let b = 2; b < mags.length - 1; b++) if (mags[b] > 0.08 * mx && mags[b] >= mags[b - 1] && mags[b] >= mags[b + 1]) peaks.push((b * SR6) / NF);
         const gaps = peaks.slice(1).map((f, i) => f - peaks[i]).sort((a, b) => a - b);
@@ -411,7 +397,6 @@
     },
   });
 
-  /* ======================= 3.6b pitch shift ======================= */
   K.demo({
     id: 'pitchshift', sec: '3.6', title: 'Pitch shifting', page: 15, y: 0.655,
     hint: 'Shift a whole octave, then switch the axis to semitones.',
@@ -429,7 +414,6 @@
         const m = { l: 44, r: 14, t: 30 };
         const pw = narrow ? W - m.l - m.r : (W - m.l - m.r - 44) / 2;
         const ph = narrow ? 170 : H - m.t - 44;
-        /* spectrum */
         const x = K.scale(0, 2400, m.l, m.l + pw), y = K.scale(0, 1.25, m.t + ph, m.t);
         F.add(K.label(m.l, m.t - 12, 'One frame: harmonics of a 150 Hz voice', 'lbl-b'));
         K.axes(F.svg, { x, y, xt: [0, 600, 1200, 1800, 2400], yt: [], fx: (v) => (v ? v : '0') + (v === 2400 ? ' Hz' : ''), grid: false });
@@ -447,7 +431,6 @@
           F.add(s('circle', { cx: x(f), cy: y(a), r: 3.5, class: 'f-t1 ring' }));
         }
         F.add(K.label(m.l + pw, m.t + 4, 'grey: original · violet: shifted', 'tick', 'end'));
-        /* contour */
         const cx0 = narrow ? m.l : m.l + pw + 44, cy0 = narrow ? m.t + ph + 70 : m.t;
         const ch = narrow ? 170 : ph;
         const tt = [], fo = [], fsft = [];
@@ -474,7 +457,6 @@
     },
   });
 
-  /* ======================= 3.7 additive noise ======================= */
   K.demo({
     id: 'noise', sec: '3.7', title: 'Additive noise', page: 16, y: 0.305,
     hint: 'Find the σ where the SNR hits 0 dB.',
@@ -500,7 +482,6 @@
         F.add(s('path', { d: K.path(Array.from(noisy, (v, i) => [x((i / SR) * 1000), y(K.clamp(v, -2.2, 2.2))])), class: 'ln s-t1', 'stroke-width': 1.25 }));
         F.add(s('path', { d: K.path(Array.from(clean, (v, i) => [x((i / SR) * 1000), y(v)])), class: 'ln s-ink', 'stroke-width': 1.5 }));
         F.add(K.label(m.l + pw, m.t - 12, 'black: clean · violet: noisy', 'tick', 'end'));
-        /* histogram */
         const hx0 = narrow ? m.l : m.l + pw + 40, hy0 = narrow ? m.t + ph + 60 : m.t;
         const hw = narrow ? W - m.l - m.r : W - m.r - hx0, hh = narrow ? 120 : ph;
         const lim = Math.max(0.05, 4 * sigma), bins = 21;
@@ -540,7 +521,6 @@
     },
   });
 
-  /* ======================= 3.8 volume scaling ======================= */
   K.demo({
     id: 'volume', sec: '3.8', title: 'Volume scaling', page: 16, y: 0.612,
     hint: 'Drag v, then add noise.',
@@ -576,7 +556,6 @@
           if (k === 2) F.add(s('path', { d: K.path(Array.from(nR, (q, i) => [x((i / SR) * 1000), y(q)])), class: 'ln s-muted', 'stroke-width': 4, opacity: 0.35 }));
           F.add(s('path', { d: K.path(Array.from(sig, (q, i) => [x((i / SR) * 1000), y(K.clamp(q, -lim, lim))])), class: 'ln ' + cls, 'stroke-width': 1.5 }));
         });
-        /* the volume factor appears in the formula, and cancels unless noise was added after scaling */
         const V = String.raw`\class{tt1}{${K.f(v, 2)}}`;
         api.eq.set(withNoise
           ? [
@@ -593,7 +572,6 @@
     },
   });
 
-  /* ======================= 3.9 mixup ======================= */
   K.demo({
     id: 'mixup', sec: '3.9', title: 'Mixup', page: 17, y: 0.171, also: [[17, 0.488]],
     hint: 'Press Draw a few times, then set α to 1.',
@@ -616,7 +594,6 @@
         const m = { l: 36, r: 12, t: 30 };
         const pw = narrow ? W - m.l - m.r : (W - m.l - m.r) * 0.42;
         const ph = narrow ? 170 : F.H - m.t - 40;
-        /* Beta density */
         const x = K.scale(0, 1, m.l, m.l + pw), y = K.scale(0, 4, m.t + ph, m.t);
         F.add(K.label(m.l, m.t - 12, 'Density of λ ~ Beta(' + K.f(alpha, 2) + ', ' + K.f(alpha, 2) + ')', 'lbl-b'));
         K.axes(F.svg, { x, y, xt: [0, 0.1, 0.5, 0.9, 1], yt: [0, 1, 2, 3, 4], fx: (v) => String(v), fy: (v) => String(v) });
@@ -631,7 +608,6 @@
         F.add(K.label(x(0.5), y(0) - 10, K.pct(pMid, 0) + ' of draws', 'lbl-b', 'middle'));
         for (const d of draws) F.add(s('line', { x1: x(d), x2: x(d), y1: y(0) + 3, y2: y(0) + 11, class: 's-t1', 'stroke-width': 1.5 }));
         F.add(s('path', { d: 'M' + x(lam) + ',' + (m.t + 2) + 'V' + y(0), class: 'ln s-ink dash', 'stroke-width': 1.5 }));
-        /* the mix */
         const mx0 = narrow ? m.l : m.l + pw + 40, my0 = narrow ? m.t + ph + 58 : m.t;
         const mw = narrow ? W - m.l - m.r : W - m.r - mx0;
         const w2 = other === 1 ? w2e : w2a, key2 = other === 1 ? 'excited' : 'auth';
@@ -661,7 +637,6 @@
         });
         const need = narrow ? lab0 + 3 * 28 + 8 : Math.max(F.H, lab0 + 3 * 28 + 4);
         if (F.H !== need) { F.H = need; F.svg.setAttribute('height', need); F.svg.setAttribute('viewBox', '0 0 ' + W + ' ' + need); }
-        /* the same λ mixes the sounds and the labels */
         const L = String.raw`\class{tt1}{${K.f(lam, 2)}}`, L1 = String.raw`\class{tt1}{${K.f(1 - lam, 2)}}`;
         const C2 = other === 1 ? 'texc' : 'tauth', vec = (v) => '[' + v.map((q) => K.f(q, 2).replace(/\.00$/, '')).join(',\\ ') + ']';
         api.eq.set([
@@ -674,7 +649,6 @@
     },
   });
 
-  /* ======================= 3.10 masking ======================= */
   K.demo({
     id: 'masking', sec: '3.10', title: 'Time masking', page: 18, y: 0.17,
     hint: 'Press New random mask, or raise p.',
@@ -729,7 +703,6 @@
     },
   });
 
-  /* ======================= 3.11 normalize and pad ======================= */
   K.demo({
     id: 'padding', sec: '3.11', title: 'Normalize, pad, mask', page: 18, y: 0.414,
     hint: 'Make one clip 4 s long.',

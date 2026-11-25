@@ -1,8 +1,3 @@
-# Reads the current Gemma 4 leaderboard rank from Kaggle and saves it to rank.json,
-# which the CV shows next to the competition. Needs the repository secrets
-# KAGGLE_USERNAME and KAGGLE_KEY (from kaggle.com > Settings > API > Create New Token)
-# and, if the team name on the leaderboard differs from the Kaggle username, the
-# repository variable KAGGLE_TEAM.
 name: Gemma 4 rank
 on:
   schedule:

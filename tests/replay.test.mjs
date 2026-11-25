@@ -1,10 +1,7 @@
-/* Tests for the replay on the result board (blop/replay.js), on made-up analyses.
-   Run with:  node --test tests/replay.test.mjs */
 import test from "node:test";
 import assert from "node:assert";
 import { EASE, bezier, contour, labelsFrom, labelsOfText, laneReach, paintLane, pitchAt, settle, speechRuns, syllables, warpContour, wordAt, wordMap, wordSpans } from "../blop/replay.js";
 
-/* an analysis as voice/engine.js gives it: 10 ms frames, with the stretches of speech, the syllable peaks and a pitch */
 function fake({ runs, nuclei = [], seconds = 4, hz = (t) => 150 + 20 * Math.sin(t * 5) }) {
   const n = Math.round(seconds * 100), speech = new Uint8Array(n), f0 = new Float32Array(n);
   for (const [a, b] of runs) for (let i = Math.round(a * 100); i < Math.round(b * 100); i += 1) { speech[i] = 1; f0[i] = hz(i / 100); }
@@ -60,7 +57,6 @@ test("a word whose sounds were not found sits between its neighbours", () => {
 });
 
 test("the words of a take get the stretches its syllable peaks fall in, in order", () => {
-  /* six one-syllable words, a pause in the middle */
   const words = ["She", "put", "the", "kids", "to", "bed"];
   const a = fake({ runs: [[0.5, 1.15], [1.5, 2.3]], nuclei: [0.6, 0.8, 1.05, 1.65, 1.95, 2.2] });
   const s = wordSpans(words, a, null);
@@ -125,7 +121,7 @@ test("the lane reaches far enough for both melodies and no less than five semito
 
 test("a slow take is mapped onto the example word by word, and back", () => {
   const ex = [{ from: 0, to: 0.4 }, { from: 0.4, to: 0.9 }, { from: 1.3, to: 1.8 }];
-  const you = [{ from: 0, to: 0.8 }, { from: 0.8, to: 1.9 }, { from: 2.7, to: 3.6 }];   /* about twice as slow, with a longer pause */
+  const you = [{ from: 0, to: 0.8 }, { from: 0.8, to: 1.9 }, { from: 2.7, to: 3.6 }];
   const m = wordMap(you, ex);
   assert.ok(Math.abs(m.fwd(0)) < 1e-9 && Math.abs(m.fwd(0.8) - 0.4) < 1e-9 && Math.abs(m.fwd(3.6) - 1.8) < 1e-9, "word edges land on word edges");
   assert.ok(Math.abs(m.fwd(0.4) - 0.2) < 1e-9, "halfway through a word is halfway through the other");

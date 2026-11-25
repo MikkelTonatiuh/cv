@@ -1,19 +1,7 @@
-/* The update rule, shaded rather than coloured.
-
-   The glyph mask gives a signed distance field; the field gives a rounded
-   surface; the surface is then shaded per pixel with a small metal BRDF —
-   a vertical studio environment, two specular lobes and a Fresnel rim. It is
-   a real render, just baked once into a bitmap instead of a GPU pass, which
-   is why it holds up at any size and costs nothing after load. */
 import { edt } from "./field.js";
 
 const FONT = (px) => `italic ${px}px 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif`;
 
-/* U+2207 is absent from the serif stack this equation is set in, so the browser
-   silently substitutes an upright system face: a boxy triangle wedged between
-   italic-serif glyphs. Drawing it as geometry instead lets it share the stack's
-   italic angle, cap height and stem contrast, so the metal shading downstream
-   is applied to a letterform that belongs to the same alphabet. */
 const NABLA_SLANT = Math.tan(12 * Math.PI / 180);
 
 function nablaMetrics(ctx, px) {
@@ -29,8 +17,6 @@ function drawNabla(ctx, x, baseline, px) {
   const top = baseline - capH;
   const sh = (y) => (baseline - y) * NABLA_SLANT;
   const L = [x + sh(top), top], R = [x + w + sh(top), top], B = [x + w / 2 + sh(baseline), baseline];
-  // outer triangle, then an inner one lifted to leave a thick left limb, a
-  // thick right limb and a hairline bar across the top — serif stem contrast
   const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
   const tIn = stem / (capH * 0.92);
   const iL = lerp(L, B, tIn * 1.15), iR = lerp(R, B, tIn * 1.15);
@@ -81,7 +67,6 @@ const norm3 = (x, y, z) => {
   return [x / l, y / l, z / l];
 };
 
-/* warm studio: bright soft key above, deep amber bounce below */
 function environment(ny) {
   const t = clamp01(ny * 0.5 + 0.5);
   const top = [1.0, 0.94, 0.82];
@@ -104,7 +89,6 @@ function bake(mask, { rim, gold = [0.92, 0.68, 0.28] }) {
   for (let i = 0; i < outside.length; i++) outside[i] = a[i * 4 + 3] > 128 ? 0 : 1;
   const dist = edt(outside, w, h);
 
-  // rounded shoulder: domed at the edge, flattening to a plateau inside
   const height = new Float32Array(w * h);
   for (let i = 0; i < height.length; i++) {
     const t = clamp01(dist[i] / rim);
@@ -136,8 +120,6 @@ function bake(mask, { rim, gold = [0.92, 0.68, 0.28] }) {
       const gy = (at(x, y + 1) - at(x, y - 1)) * relief;
       const [nx, ny, nz] = norm3(-gx, gy, 1);
 
-      // reflected direction drives the environment lookup: this is what makes
-      // the surface read as metal rather than as a coloured shape
       const rdot = 2 * nz;
       const ry = rdot * ny;
       const env = environment(ry);
@@ -150,7 +132,6 @@ function bake(mask, { rim, gold = [0.92, 0.68, 0.28] }) {
       let g = gold[1] * env[1] * 1.2 + s1 * 2.0 + s2 * 0.52 + fres * 0.4;
       let b = gold[2] * env[2] * 1.2 + s1 * 1.8 + s2 * 0.34 + fres * 0.22;
 
-      // filmic-ish shoulder, then gamma
       r = clamp01(r / (1 + r * 0.72)) ** (1 / 2.05);
       g = clamp01(g / (1 + g * 0.72)) ** (1 / 2.05);
       b = clamp01(b / (1 + b * 0.72)) ** (1 / 2.05);
@@ -165,11 +146,6 @@ function bake(mask, { rim, gold = [0.92, 0.68, 0.28] }) {
   return out;
 }
 
-/* The relief is baked per pixel, so the bake has to match the box it will be
-   shown in: a fixed size means either a soft upscale or paying for ten times
-   the pixels the layout asked for. drawRuns is cheap text measurement, so a
-   probe pass gives the px that lands the bake on the box, and the scene calls
-   __resize() whenever it re-lays the host. */
 export async function mountMath3D(host, { runs, px = 120 } = {}) {
   if (!host || !runs || !runs.length) return { destroy() {} };
   let shaded = null, builtW = 0;

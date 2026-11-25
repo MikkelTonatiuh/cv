@@ -17,8 +17,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap">
 <style>
-/* Layout: a split reader. The live figure sits on the left, the thesis itself scrolls on the right, like a lab bench beside the paper.
-   Colour is reserved for meaning: the three speaking styles, and the terms of each equation. */
 :root {
   --bg: #e7eaed;
   --panel: #fbfbfa;
@@ -75,14 +73,12 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 28px rgba(0, 0, 0, 0.35);
   color-scheme: dark;
 }
-
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
 button, select, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--t1); outline-offset: 2px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-
 .app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); }
 .bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
 .brand { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
@@ -90,7 +86,6 @@ button, select, input { font: inherit; color: inherit; }
 .brand-sub { font: 12px/1.3 var(--sans); color: var(--muted); }
 .nav-sel select { max-width: min(420px, 60vw); padding: 6px 30px 6px 10px; border: 1px solid var(--axis); border-radius: 8px; background: var(--panel); font-size: 14px; }
 .pageind { margin-left: auto; font: 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
-
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--ink); background: var(--ink); color: var(--panel); font-size: 13.5px; font-weight: 500; cursor: pointer; }
 .btn:hover { opacity: 0.9; }
 .btn.ghost { background: transparent; color: var(--ink); border-color: var(--axis); }
@@ -98,8 +93,6 @@ button, select, input { font: inherit; color: inherit; }
 .btn.icon { width: 32px; height: 32px; padding: 0; font-size: 15px; }
 .btn:disabled { opacity: 0.35; cursor: default; }
 .btn[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
-
-/* the two sides share the width at --split; the handle between them drags it */
 .split { display: grid; grid-template-columns: calc((100% - 10px) * var(--split, 0.5)) 10px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); min-height: 0; }
 .stage { min-width: 0; min-height: 0; overflow: auto; background: var(--panel); padding: 18px 26px 48px; }
 .splitter { position: relative; background: var(--line); cursor: col-resize; touch-action: none; }
@@ -110,7 +103,6 @@ button, select, input { font: inherit; color: inherit; }
 .reader { position: relative; min-width: 0; min-height: 0; background: var(--bg); }
 .pane { position: relative; height: 100%; overflow: auto; overflow-anchor: none; padding: 20px 20px 70vh 52px; scroll-behavior: auto; }
 .readline { position: absolute; left: 10px; top: 30%; z-index: 5; width: 0; height: 0; border-left: 10px solid var(--ink-2); border-top: 7px solid transparent; border-bottom: 7px solid transparent; transform: translateY(-50%); pointer-events: none; }
-/* a page is the PDF drawn by PDF.js (canvas, selectable text, links) over a picture that shows while it loads */
 .page { position: relative; width: var(--page-w, min(780px, 100%)); margin: 0 auto 16px; aspect-ratio: 595 / 842; background: #ffffff; box-shadow: var(--shadow); border-radius: 2px; }
 .page img { display: block; width: 100%; height: 100%; filter: var(--page-filter); border-radius: 2px; }
 .page canvas.pdf { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; filter: var(--page-filter); border-radius: 2px; }
@@ -130,8 +122,6 @@ button, select, input { font: inherit; color: inherit; }
 .mark:hover { border-color: var(--ink); background: var(--panel-2); }
 .mark.on { background: var(--ink); border-color: var(--ink); }
 .solo-nav { display: none; }
-
-/* stage content */
 .stage-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .eyebrow { margin: 0; font: 600 11.5px/1.3 var(--sans); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-2); }
 .eyebrow .sec { display: inline-block; margin-right: 8px; padding: 1px 6px; border: 1px solid var(--axis); border-radius: 5px; letter-spacing: 0.04em; font-family: var(--mono); font-weight: 500; }
@@ -179,8 +169,6 @@ svg.fig { display: block; max-width: 100%; height: auto; user-select: none; -web
 .tex .tauth { fill: var(--auth); stroke: var(--auth); }
 mjx-container[jax="SVG"][display="true"] { margin: 0.3em 0 !important; text-align: left !important; }
 .source { margin: 10px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); max-width: 70ch; }
-
-/* point at a coloured symbol or at its part of the figure: that colour lights up, the others step back */
 .eqlive .tt1, .eqlive .tt2, .eqlive .tt3 { cursor: help; }
 svg.fig :is(.s-t1, .s-t2, .s-t3, .f-t1, .f-t2, .f-t3), .eqlive :is(.tt1, .tt2, .tt3) { transition: opacity 0.15s; }
 .stage[data-focus="t1"] :is(svg.fig :is(.s-t2, .s-t3, .f-t2, .f-t3), .eqlive :is(.tt2, .tt3)),
@@ -198,8 +186,6 @@ svg.fig :is(.s-calm, .s-excited, .s-auth, .f-calm, .f-excited, .f-auth) { transi
 .stage[data-focus="excited"] :is(svg.fig :is(.s-calm, .s-auth, .f-calm, .f-auth), .eqlive :is(.tcalm, .tauth)),
 .stage[data-focus="auth"] :is(svg.fig :is(.s-calm, .s-excited, .f-calm, .f-excited), .eqlive :is(.tcalm, .texc)) { opacity: 0.18; }
 .err { color: var(--warn); font-size: 14px; }
-
-/* svg marks and text */
 svg.fig text { font-family: var(--sans); }
 .tick { font-size: 11px; fill: var(--muted); }
 .alabel { font-size: 11.5px; font-weight: 500; fill: var(--ink-2); }
@@ -232,13 +218,9 @@ svg .mono, .mono { font-family: var(--mono) !important; }
 .hit { fill: transparent; }
 .drag { cursor: grab; touch-action: none; }
 .drag:active { cursor: grabbing; }
-
-/* tooltip */
 .tip { position: fixed; z-index: 50; max-width: 300px; padding: 7px 10px; background: var(--ink); color: var(--panel); border-radius: 7px; font-size: 12.5px; line-height: 1.4; pointer-events: none; box-shadow: var(--shadow); }
 .tip b { font-family: var(--mono); font-weight: 500; }
 .tip-row + .tip-row { margin-top: 2px; }
-
-/* panels */
 .panel { font-size: 14.5px; line-height: 1.55; max-width: 70ch; }
 .panel h3 { margin-top: 22px; }
 .howto { margin: 0; color: var(--ink-2); }
@@ -251,8 +233,6 @@ svg .mono, .mono { font-family: var(--mono) !important; }
 .chip:hover { border-color: var(--ink); }
 .panel a { color: var(--ink); text-underline-offset: 3px; }
 a.btn { text-decoration: none; }
-
-/* phones and narrow windows: one column, one thesis page at a time */
 @media (max-width: 899px) {
   .app { height: auto; display: block; }
   .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; padding: 8px 16px; }

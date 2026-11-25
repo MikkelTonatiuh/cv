@@ -1,10 +1,3 @@
-// Prints the live CV page to a one-page A4 PDF, so the offline CV is always the
-// same as the site. Run from the repo root:
-//
-//   node tools/print-cv.mjs [out.pdf] [lang: en|da|es]
-//
-// PHONE="12 34 56 78" adds a phone mark to the contact marks under the photo; the
-// number is not stored in the page itself. Needs Playwright (npm i -D playwright).
 import { createRequire } from "module";
 import http from "http";
 import fs from "fs";
@@ -16,7 +9,6 @@ const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..")
 const out = path.resolve(process.argv[2] || "Mikkel-Chavez-Petersen-CV.pdf");
 const lang = process.argv[3] || "en";
 
-/* A small static server for the repo: the page loads its modules over http. */
 const types = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".json": "application/json", ".svg": "image/svg+xml", ".jpg": "image/jpeg", ".png": "image/png", ".mp3": "audio/mpeg", ".css": "text/css" };
 const server = http.createServer((req, res) => {
   const file = path.join(root, decodeURIComponent(req.url.split("?")[0]).replace(/\/$/, "/index.html"));
@@ -30,7 +22,6 @@ const base = `http://localhost:${server.address().port}/`;
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1100, height: 1400 }, reducedMotion: "reduce" });
-/* VENDOR=<dir> serves React from local copies where unpkg cannot be reached. */
 if (process.env.VENDOR) {
   const v = process.env.VENDOR;
   const map = {
@@ -44,10 +35,8 @@ await context.addInitScript(() => { try { localStorage.setItem("cv-theme", "ligh
 const page = await context.newPage();
 await page.goto(base);
 if (lang !== "en") await page.click(`button:text-is("${lang}")`);
-/* The name is written, the portrait has come out of its noise, the terminal rests on its last frame. */
 await page.waitForTimeout(9000);
 if (process.env.PHONE) {
-  /* A phone mark next to the others under the photo. */
   await page.evaluate((phone) => {
     const nav = document.querySelector(".pf-col .contact");
     const a = document.createElement("a");
@@ -59,7 +48,6 @@ if (process.env.PHONE) {
   }, process.env.PHONE);
 }
 
-/* Links in the PDF go to the live site, not to the local server it was printed from. */
 const LIVE = process.env.LIVE || "https://mikkeltonatiuh.github.io/cv/";
 await page.evaluate((live) => {
   for (const a of document.querySelectorAll("a[href]")) {
@@ -68,7 +56,6 @@ await page.evaluate((live) => {
   }
 }, LIVE);
 
-/* The largest scale at which it still fits one page. */
 const pdfAt = (scale) => page.pdf({ format: "A4", printBackground: true, preferCSSPageSize: true, scale });
 const pagesIn = (buf) => (buf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
 let lo = 0.5, hi = 1, pdf = await pdfAt(1), scale = 1;

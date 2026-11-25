@@ -1,20 +1,3 @@
-/* Picks Blop's example voice lines from CREMA-D: 91 real actors saying 12 sentences in different emotions.
-
-   For every sentence and tone it ranks the clips by how clearly listeners heard the intended emotion from
-   the voice alone (CREMA-D's crowd ratings), downloads the best few, measures them with voice/engine.js and
-   keeps the one that is clean, easy to pitch-track and fits the tone. It writes voice/models/<id>.mp3 and, unless
-   voice/models/lines.json already holds the AI-voice lines (see the end of the file), lines.json, which Blop reads.
-
-   With --calibrate it then plays the real test: other actors' takes of the same sentence are scored against
-   each example. Takes in the example's emotion should score higher than takes in the other two.
-
-   Run from anywhere (Node 18+, ffmpeg on the PATH):
-     node tools/crema-d-examples.mjs
-     node tools/crema-d-examples.mjs --calibrate
-
-   Downloads are cached in the system temp folder (crema-d). CREMA-D: Cao et al. 2014,
-   https://github.com/CheyneyComputerScience/CREMA-D. Open Database License; the recordings themselves
-   under the Database Contents License. */
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -28,7 +11,6 @@ const E = createRequire(import.meta.url)(path.join(ROOT, "voice", "engine.js"));
 const OUT = path.join(ROOT, "voice", "models");
 const CACHE = path.join(os.tmpdir(), "crema-d");
 const META = "https://raw.githubusercontent.com/CheyneyComputerScience/CREMA-D/master/";
-/* the audio comes from the project's own GitLab mirror, which CREMA-D recommends over GitHub's LFS quota */
 const AUDIO = "https://gitlab.com/cs-cooper-lab/crema-d-mirror/-/raw/main/AudioWAV/";
 
 const SENTENCES = {
@@ -45,16 +27,14 @@ const SENTENCES = {
   TSI: "The surface is slick",
   WSI: "We'll stop in a couple of minutes",
 };
-/* the thesis grouped emotions into three speaking styles; the example for each style is that group's
-   clearest emotion */
 const TONES = {
   calm: { emo: "NEU", vote: "N", word: "neutral" },
   excited: { emo: "HAP", vote: "H", word: "happy" },
   authoritative: { emo: "ANG", vote: "A", word: "angry" },
 };
 const EMO_TONE = Object.fromEntries(Object.entries(TONES).map(([tone, t]) => [t.emo, tone]));
-const PER_LINE = 6;      /* best-rated clips measured for each sentence and tone */
-const TAKES = 12;        /* other actors' takes per emotion in the calibration */
+const PER_LINE = 6;
+const TAKES = 12;
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const quantile = (arr, q) => {
@@ -63,7 +43,6 @@ const quantile = (arr, q) => {
 };
 const median = (arr) => quantile(arr, 0.5);
 
-/* ---------- downloads ---------- */
 fs.mkdirSync(path.join(CACHE, "wav"), { recursive: true });
 
 async function download(url, file) {
@@ -142,25 +121,22 @@ function measure(name) {
   return analysed.get(name);
 }
 
-/* ---------- what listeners heard (voice-only ratings) ---------- */
 const metaFile = async (name, url) => fs.readFileSync(await download(url, path.join(CACHE, name)), "utf8");
 const votesCsv = parseCsv(await metaFile("tabulatedVotes.csv", META + "processedResults/tabulatedVotes.csv"));
 const peopleCsv = parseCsv(await metaFile("VideoDemographics.csv", META + "VideoDemographics.csv"));
 const people = new Map(peopleCsv.slice(1).map((r) => [r[0], { age: +r[1], sex: r[2] }]));
 
 const LETTERS = ["A", "D", "F", "H", "N", "S"];
-const LEVEL_COL = { A: 12, H: 15, N: 16 };   /* mean rated strength of that emotion, 0-100 */
+const LEVEL_COL = { A: 12, H: 15, N: 16 };
 const clips = new Map();
 for (const r of votesCsv.slice(1)) {
-  if (!r[0].startsWith("1")) continue;   /* ids 1xxxxx are the voice-only ratings, 2 face-only, 3 audio-visual */
+  if (!r[0].startsWith("1")) continue;
   const name = r[7], [actor, sentence, emo, level] = name.split("_");
   const votes = Object.fromEntries(LETTERS.map((l, i) => [l, +r[1 + i]]));
   const strength = Object.fromEntries(Object.entries(LEVEL_COL).map(([l, col]) => [l, +r[col]]));
   clips.set(name, { name, actor, sentence, emo, level, votes, strength, n: +r[8] });
 }
 
-/* how clearly listeners heard the intended emotion: share of votes (shrunk toward 1/2, so 3 of 3 does not
-   beat 9 of 10), times how strongly they heard it */
 function heard(c) {
   const want = TONES[EMO_TONE[c.emo]];
   if (!want || c.n < 6) return null;
@@ -177,8 +153,6 @@ const neutralOf = (actor, sentence) => {
   return null;
 };
 
-/* ---------- is a clip a good example? ---------- */
-/* clean recording, a pitch track without octave slips, no clipping */
 function quality(m) {
   const a = m.a;
   if (!a.ok) return 0;
@@ -192,26 +166,21 @@ function quality(m) {
     if (Math.abs(12 * Math.log2(f0[i] / f0[i - 1])) > 3) slips += 1;
   }
   const slip = pairs ? slips / pairs : 1;
-  /* CREMA-D's median clip has speech 29 dB above the background and 78% of it pitch-tracked */
   if (snr < 22 || voicedShare < 0.5 || a.clipped > 0.001 || slip > 0.03) return 0;
   return clamp((snr - 22) / 20, 0.3, 1) * clamp(voicedShare / 0.8, 0.3, 1) * (1 - 10 * slip);
 }
 
-/* fits the tone, judged against the same actor's neutral take of the sentence */
 function fit(tone, a, neutral) {
-  const lift = neutral && neutral.ok ? 12 * Math.log2(a.pitchHz / neutral.pitchHz) : null;   /* semitones above their neutral voice */
+  const lift = neutral && neutral.ok ? 12 * Math.log2(a.pitchHz / neutral.pitchHz) : null;
   const falls = a.endings && a.endings.n ? a.endings.falling / a.endings.n : 0.5;
   if (tone === "excited") return clamp(a.pitchSd / 4, 0.2, 1) * (lift == null ? 0.8 : clamp(0.5 + lift / 6, 0.3, 1));
   if (tone === "authoritative") {
-    /* firm rather than shouting: close to their usual pitch, falling at the end, clear stress */
     const steady = lift == null ? 0.7 : lift <= 3 ? 1 : clamp(1 - (lift - 3) / 5, 0.1, 1);
     return steady * (0.6 + 0.4 * falls) * clamp(a.stressSd / 4, 0.4, 1);
   }
-  /* calm: unhurried and settled */
   return clamp((5 - a.pace) / 2, 0.3, 1) * (0.6 + 0.4 * falls) * (a.pitchSd <= 3 ? 1 : 0.6);
 }
 
-/* ---------- pick ---------- */
 const plan = [];
 for (const tone of Object.keys(TONES)) {
   for (const sentence of Object.keys(SENTENCES)) {
@@ -237,14 +206,13 @@ for (const { tone, sentence, cands } of plan) {
     if (!q) continue;
     const nName = neutralOf(c.actor, c.sentence);
     const neutral = nName ? measure(nName).a : null;
-    /* spread the lines over many voices */
     const score = c.heard.rank * q * fit(tone, m.a, neutral) * Math.pow(0.8, uses.get(c.actor) || 0);
     if (!best || score > best.score) best = { c, m, score };
   }
   if (!best) { console.warn("no usable clip for " + tone + " " + sentence); continue; }
   uses.set(best.c.actor, (uses.get(best.c.actor) || 0) + 1);
   const id = tone + "-" + sentence.toLowerCase();
-  const gain = -1.5 - 20 * Math.log10(Math.max(1e-4, best.m.peak));   /* peaks at -1.5 dBFS */
+  const gain = -1.5 - 20 * Math.log10(Math.max(1e-4, best.m.peak));
   execFileSync("ffmpeg", [
     "-hide_banner", "-loglevel", "error", "-y", "-i", clipFile(best.c.name), "-af",
     "volume=" + gain.toFixed(2) + "dB,silenceremove=start_periods=1:start_threshold=-45dB,areverse,silenceremove=start_periods=1:start_threshold=-45dB,areverse,adelay=250,apad=pad_dur=0.3,asetpts=N/SR/TB",
@@ -257,11 +225,9 @@ for (const { tone, sentence, cands } of plan) {
   });
   console.log(id.padEnd(20) + best.c.name.padEnd(18) + (who.sex || "").padEnd(8) + best.c.heard.label);
 }
-/* lines.json also holds the AI-voice lines and their word times, which the app plays first: a run leaves it alone
-   then, unless it is asked to replace it (--write-lines) */
 const linesFile = path.join(OUT, "lines.json");
 let kept = [];
-try { kept = JSON.parse(fs.readFileSync(linesFile, "utf8")).filter((l) => l && l.ai); } catch { /* no file yet */ }
+try { kept = JSON.parse(fs.readFileSync(linesFile, "utf8")).filter((l) => l && l.ai); } catch {}
 if (kept.length && !process.argv.includes("--write-lines")) {
   console.log("voice/models/lines.json has " + kept.length + " AI-voice lines: left as it is (--write-lines replaces it with these " + lines.length + ")");
 } else {
@@ -269,7 +235,6 @@ if (kept.length && !process.argv.includes("--write-lines")) {
   console.log("wrote " + lines.length + " lines to voice/models/lines.json");
 }
 
-/* ---------- the real test: other actors' takes against each example ---------- */
 if (process.argv.includes("--calibrate")) {
   const jobs = [];
   for (const line of lines) {

@@ -1,12 +1,9 @@
-/* Tests for voice/engine.js with synthetic voices whose answers are known.
-   Run with:  node --test tests/engine.test.js */
 const test = require("node:test");
 const assert = require("node:assert");
 const E = require("../voice/engine.js");
 
 const SR = 8000;
 
-/* a voiced sound: harmonics of f0(t), switched on by env(t) */
 function voice(seconds, f0, env, sr = SR) {
   const n = Math.round(seconds * sr), out = new Float32Array(n);
   let ph = 0;
@@ -19,7 +16,6 @@ function voice(seconds, f0, env, sr = SR) {
   }
   return out;
 }
-/* syllables of a given length, grouped into phrases separated by pauses */
 function syllables({ rate = 4, perPhrase = 6, phrases = 3, pause = 0.6, lead = 0.4 } = {}) {
   const list = [];
   let t = lead;
@@ -138,7 +134,6 @@ test("the same rhythm with the melody turned upside down is not a copy", () => {
   const upside = E.analyze(voice(s.end, (t) => (150 * 150) / melody(t), s.env), SR, { minVoiced: 0.6 });
   const c = E.compare(model, upside);
   assert.ok(c.parts.shape < 0.5, "melody part " + c.parts.shape + " (gap " + c.gap.toFixed(2) + " st)");
-  /* rhythm, loudness and range are a perfect match here, so the total stays below "very close" only */
   assert.ok(c.score < 85, "scored " + c.score);
   assert.ok(/Melody shape/.test(c.headline), c.headline);
 });

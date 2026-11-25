@@ -1,10 +1,7 @@
-/* Tests for the part of the word check that doesn't need the model (blop/clarity.js).
-   Run with:  node --test tests/clarity.test.mjs */
 import test from "node:test";
 import assert from "node:assert";
 import { CUTS, LIVE, PRAISE, TAIL, clarityNote, clarityTips, creditOf, downloadMeter, levelOf, summarize, tailHeard, wordScores, wordsReached } from "../blop/clarity.js";
 
-/* the word pieces the model's tokenizer gives for " Could I have a window seat, please?" */
 const TOKENS = ["ĠCould", "ĠI", "Ġhave", "Ġa", "Ġwindow", "Ġseat", ",", "Ġplease", "?"];
 const WORDS = ["Could", "I", "have", "a", "window", "seat,", "please?"];
 
@@ -79,7 +76,6 @@ test("a soft word on its own is mentioned without calling the read unclear", () 
 });
 
 test("a finished take has to score well as well as have no hard word to please Blop", () => {
-  /* nothing is hard to hear, but every word is a little soft, "window" and "seat" the most: 86 */
   const soft = level([["Could", -0.8], ["I", -0.6], ["have", -0.8], ["a", -0.6], ["window", -1.6], ["seat,", -1.4], ["please?", -0.8]]);
   assert.strictEqual(summarize(soft).band, "good", "while the learner speaks it is the old rule");
   const sum = summarize(soft, PRAISE);
@@ -87,17 +83,13 @@ test("a finished take has to score well as well as have no hard word to please B
   assert.strictEqual(sum.bad.length + sum.mid.length, 0);
   assert.strictEqual(sum.band, "mid");
   assert.strictEqual(clarityTips(sum)[0], "nearly. 'window' and 'seat' were the softest.", clarityTips(sum)[0]);
-  /* a clear read still gets there */
   assert.strictEqual(summarize(level([["Don't", -0.1], ["forget", -0.2], ["a", -0.1], ["jacket.", -0.3]]), PRAISE).band, "good");
-  /* and the cut-off for a poor read is not moved */
   assert.strictEqual(summarize(level([["How", -8], ["much", -9], ["does", -9], ["this", -7], ["cost?", -9]]), PRAISE).band, "bad");
 });
 
 test("the first-visit download share follows the library's total and doesn't jump to 99 on a small first file", () => {
   const m = downloadMeter();
-  /* the config file comes first, on its own, and is done at once */
   assert.strictEqual(m({ status: "progress", file: "config.json", loaded: 2202, total: 2202 }), null);
-  /* the library's total holds every file's size before the weights start */
   assert.strictEqual(m({ status: "progress_total", progress: 0.005, loaded: 2202, total: 43e6 }), null, "nothing new to show at 0%");
   assert.strictEqual(m({ status: "progress_total", progress: 12.4, loaded: 5.3e6, total: 43e6 }), 12);
   assert.strictEqual(m({ status: "progress_total", progress: 11, loaded: 4.7e6, total: 43e6 }), null, "it never goes back");
@@ -139,11 +131,9 @@ test("when most words are missed, Blop asks for a slower read instead of listing
   assert.ok(clarityTips(sum)[0].includes("slower"), clarityTips(sum)[0]);
 });
 
-/* the model voice's [start, end] for "Could I have a window": clear of the clip's start, a pause before the last word */
 const ANCHORS = [[0.1, 0.3], [0.35, 0.6], [0.65, 1.0], [1.05, 1.5]];
 
 test("a word counts as said once the speaking time is well past the model voice's time to the end of it", () => {
-  /* the model voice reaches the ends of its words 0.2, 0.5, 0.9 and 1.4 s after the first starts */
   const at = (n) => (n * LIVE.slowest) + LIVE.lead;
   assert.strictEqual(wordsReached(ANCHORS, 0.5), 0);
   assert.strictEqual(wordsReached(ANCHORS, at(0.2) - 0.01), 0);

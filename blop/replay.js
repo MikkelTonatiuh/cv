@@ -1,15 +1,6 @@
-/* The replay on the result board: where each word is said in a recording, the melody of a recording, the easing the
-   board moves with, and how the melody lane is drawn. The page (Blop.dc.html) owns the audio and the clock; this
-   file only turns recordings into things to show, so it can be tested without a browser.
-
-   Words. Where the sounds of a word are is not known for a learner's take the way it is for the example (whose sounds
-   were forced onto a phoneme model once, offline: voice/models/lines.json). For a take, the syllable peaks the
-   engine finds (voice/engine.js, track.nuclei) are lined up with the syllables the line should have, in order,
-   and each word gets the stretch its peaks fall in. */
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
-/* ---------- easing ---------- */
 export function bezier(x1, y1, x2, y2) {
   const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
   const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
@@ -28,17 +19,12 @@ export function bezier(x1, y1, x2, y2) {
     return Y(t);
   };
 }
-/* Material Design 3's motion curves (material-components-android, docs/theming/Motion.md): things that arrive
-   decelerate hard, things that move across the screen ease both ways */
 export const EASE = {
   emphasized: bezier(0.05, 0.7, 0.1, 1),
   standard: bezier(0.2, 0, 0, 1),
   leaving: bezier(0.3, 0, 0.8, 0.15),
 };
 
-/* ---------- words ---------- */
-
-/* syllables in an English word, by counting vowel groups: close enough to line peaks up with words */
 export function syllables(word) {
   const w = String(word || "").toLowerCase().replace(/[^a-z']/g, "");
   if (!w) return 0;
@@ -48,7 +34,6 @@ export function syllables(word) {
   return Math.max(1, n);
 }
 
-/* the stretches of speech and the gaps between them, in seconds, from an analysis (voice/engine.js) */
 export function speechRuns(analysis) {
   const tr = analysis && analysis.track;
   if (!tr || !tr.speech) return { from: 0, to: 0, gaps: [] };
@@ -65,14 +50,10 @@ export function speechRuns(analysis) {
   return { from: first * hop, to: (last + 1) * hop, gaps };
 }
 
-/* Gives every word the stretch of the recording where it is said, from where its sounds are: anchors[i] is
-   [from, to] in seconds, or null if unknown. Neighbouring words meet halfway across a gap shorter than `join`;
-   across a longer one (a pause) each keeps a little margin; the first and last words reach the speech's edges. */
 export function settle(anchors, from, to, { join = 0.16, pad = 0.04, reach = 0.25 } = {}) {
   const n = anchors.length;
   if (!n) return [];
   const a = anchors.map((x) => (x ? [x[0], x[1]] : null));
-  /* words with no sounds found share the stretch between their neighbours */
   for (let s = 0; s < n; s += 1) {
     if (a[s]) continue;
     let e = s;
@@ -93,13 +74,11 @@ export function settle(anchors, from, to, { join = 0.16, pad = 0.04, reach = 0.2
   return out;
 }
 
-/* nuclei times in seconds */
 function peaks(analysis) {
   const tr = analysis && analysis.track;
   return tr && tr.nuclei ? tr.nuclei.map((i) => i * (tr.hop || 0.01)) : [];
 }
 
-/* For a recording with known word spans (the example), which word each of its syllable peaks belongs to. */
 export function labelsFrom(analysis, spans) {
   return peaks(analysis).map((t) => {
     let best = 0, dist = Infinity;
@@ -111,16 +90,12 @@ export function labelsFrom(analysis, spans) {
   });
 }
 
-/* the same for a line of text: one label per syllable it should have */
 export function labelsOfText(words) {
   const out = [];
   words.forEach((w, i) => { for (let k = 0; k < syllables(w); k += 1) out.push(i); });
   return out;
 }
 
-/* Where each word of `words` is said in a take. labels says which word each of the reference's syllables belongs to
-   (labelsFrom for the example, labelsOfText when there is no example); the take's syllable peaks are lined up with
-   them in order. Returns [{ w, from, to }] in seconds from the start of the recording. */
 export function wordSpans(words, analysis, labels, opts = {}) {
   const n = words.length;
   if (!n) return [];
@@ -130,7 +105,6 @@ export function wordSpans(words, analysis, labels, opts = {}) {
   const ref = labels && labels.length ? labels : labelsOfText(words);
   let anchors;
   if (!nu.length) {
-    /* nothing to go on: share the speech out by letters */
     const total = words.reduce((s, w) => s + Math.max(1, String(w).length), 0);
     let at = from;
     anchors = words.map((w) => { const a = at; at += ((to - from) * Math.max(1, String(w).length)) / total; return [a, at]; });
@@ -144,10 +118,8 @@ export function wordSpans(words, analysis, labels, opts = {}) {
     last[w] = t;
   });
   if (opts.valleys !== false && analysis.track.db) return valleySpans(words, analysis, first, last, from, to, gaps);
-  /* a peak is the middle of a vowel: the word starts a little before it and ends a little after */
   anchors = first.map((f, i) => (f === null ? null : [Math.max(from, f - 0.07), Math.min(to, last[i] + 0.07)]));
   const spans = settle(anchors, from, to);
-  /* a pause belongs to nobody: a word does not run on into a silence between it and the next */
   spans.forEach((s, i) => {
     if (i === 0) return;
     const prev = spans[i - 1];
@@ -161,12 +133,9 @@ export function wordSpans(words, analysis, labels, opts = {}) {
   return spans.map((s, i) => ({ w: words[i], from: s[0], to: Math.max(s[0], s[1]) }));
 }
 
-/* Each word boundary falls in the quietest moment between the last syllable peak of one word and the first of the next
-   (a valley in the loudness), and a pause belongs to nobody. */
 function valleySpans(words, analysis, first, last, from, to, gaps) {
   const n = words.length, tr = analysis.track, hop = tr.hop || 0.01, db = tr.db;
   const f = first.slice(), l = last.slice();
-  /* words with no peak take a place between their neighbours */
   for (let s = 0; s < n; s += 1) {
     if (f[s] !== null) continue;
     let e = s;
@@ -203,17 +172,11 @@ function valleySpans(words, analysis, first, last, from, to, gaps) {
   return spans.map((s, i) => ({ w: words[i], from: s[0], to: Math.max(s[0], s[1]) }));
 }
 
-/* which word is being said at time t, or -1 between words */
 export function wordAt(spans, t) {
   for (let i = 0; i < spans.length; i += 1) if (t >= spans[i].from && t < spans[i].to) return i;
   return -1;
 }
 
-/* ---------- melody ---------- */
-
-/* The melody of a recording for the lane: voiced pitch in semitones around the speaker's own usual pitch, as
-   stretches (the line breaks where the voice does for more than 0.2 s; a consonant doesn't), smoothed a little, in seconds from egin (the start of the first
-   word, or of the speech if not given) to inish. */
 export function contour(analysis, begin, finish) {
   const tr = analysis && analysis.ok && analysis.track;
   if (!tr) return null;
@@ -238,7 +201,6 @@ export function contour(analysis, begin, finish) {
   return { from, to, dur: to - from, segs: smooth, reach: all.length ? all[Math.floor(0.95 * (all.length - 1))] : 0 };
 }
 
-/* the pitch of a contour at time t, or null where the voice isn't pitched */
 export function pitchAt(c, t) {
   if (!c) return null;
   for (const s of c.segs) {
@@ -251,11 +213,6 @@ export function pitchAt(c, t) {
   return null;
 }
 
-/* ---------- one time axis for two recordings ---------- */
-
-/* A map from the seconds of one recording of a line to the seconds of another, word by word: the start and the end of
-   every word are matching points, with straight lines between them (a pause lands on a pause) and a slope of 1 beyond
-   the ends. src and dst are word spans [{ from, to }] of the same words in the same order. Returns { fwd, inv }. */
 export function wordMap(src, dst) {
   const xs = [], ys = [];
   const add = (x, y) => {
@@ -277,17 +234,11 @@ export function wordMap(src, dst) {
   return { fwd: line(xs, ys), inv: line(ys, xs) };
 }
 
-/* a contour with its times passed through a map such as wordMap's fwd */
 export function warpContour(c, fwd) {
   if (!c) return c;
   return { ...c, dur: fwd(c.dur), segs: c.segs.map((s) => s.map((p) => [fwd(p[0]), p[1]])) };
 }
 
-/* ---------- drawing the lane ---------- */
-
-/* ctx is a 2d context already scaled to CSS pixels. o: { you, ex (contours), T (seconds across), R (semitones above
-   and below the middle), voice ("you" | "example"), at (the playhead in that voice's seconds, or null), shown (how
-   much of the take is drawn, 0 to 1), tint ([r, g, b] 0-255), spans (word spans of the voice being played) } */
 export function paintLane(ctx, W, H, o) {
   const pad = 8, top = 10, bottom = 12, mid = (H - bottom + top) / 2, half = (H - bottom - top) / 2;
   const X = (t) => pad + (clamp(t, 0, o.T) / o.T) * (W - 2 * pad);
@@ -299,14 +250,12 @@ export function paintLane(ctx, W, H, o) {
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
-  /* the middle: the speaker's own usual pitch */
   ctx.strokeStyle = "rgba(160,175,195,0.14)";
   ctx.lineWidth = 1;
   ctx.setLineDash([2, 5]);
   ctx.beginPath(); ctx.moveTo(pad, mid); ctx.lineTo(W - pad, mid); ctx.stroke();
   ctx.setLineDash([]);
 
-  /* where the words of the voice that is playing begin */
   if (o.spans) {
     ctx.strokeStyle = "rgba(160,175,195,0.16)";
     ctx.beginPath();
@@ -317,7 +266,6 @@ export function paintLane(ctx, W, H, o) {
   const reach = o.shown === undefined ? 1 : o.shown;
   const meEnd = o.you ? o.you.dur * reach : 0;
 
-  /* the gap between the two melodies, where both have a pitch */
   if (o.you && o.ex) {
     ctx.strokeStyle = rgba(me, 0.10);
     ctx.lineWidth = 3;
@@ -345,12 +293,10 @@ export function paintLane(ctx, W, H, o) {
     }
   };
 
-  /* the example: a wide, quiet ribbon to follow, brighter where it has been played */
   const exPlayed = o.voice === "example" && playing ? o.at : 0;
   trace(o.ex, o.ex ? o.ex.dur : 0, 8, "rgba(185,200,222,0.30)");
   if (exPlayed) trace(o.ex, exPlayed, 8, "rgba(210,222,238,0.62)");
 
-  /* you: the take's own line, glowing where it has been played */
   const youPlayed = o.voice === "you" && playing ? o.at : meEnd;
   if (o.you) {
     trace(o.you, meEnd, 2.5, rgba(me, o.voice === "example" && playing ? 0.35 : 0.55));
@@ -361,7 +307,6 @@ export function paintLane(ctx, W, H, o) {
     ctx.restore();
   }
 
-  /* the playhead, and a dot on the line of the voice that is playing */
   if (playing) {
     const x = X(o.at);
     ctx.strokeStyle = "rgba(232,238,244,0.55)";
@@ -378,7 +323,6 @@ export function paintLane(ctx, W, H, o) {
   }
 }
 
-/* how far the lane reaches in semitones: enough for either melody, never less than 5 */
 export function laneReach(you, ex) {
   const r = Math.max(you ? you.reach : 0, ex ? ex.reach : 0);
   return Math.max(5, Math.ceil(r * 1.15));

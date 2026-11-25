@@ -1,4 +1,3 @@
-/* Ported from src/lib/voicemasterApi.js — same two-URL attempt and payload guard. */
 export const VOICEMASTER_API = "http://127.0.0.1:8000";
 
 const FALLBACK = "Could not analyse that take.";

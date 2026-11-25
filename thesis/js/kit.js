@@ -1,10 +1,8 @@
-/* kit.js: small helpers shared by every demo (DOM, SVG, math, controls, TeX). */
 (function () {
   'use strict';
   const NS = 'http://www.w3.org/2000/svg';
   const K = (window.K = {});
 
-  /* ---------- DOM / SVG ---------- */
   function setAttrs(e, attrs, svg) {
     for (const k in attrs) {
       const v = attrs[k];
@@ -32,13 +30,11 @@
     return e;
   };
 
-  /* ---------- numbers ---------- */
   K.clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   K.lerp = (a, b, t) => a + (b - a) * t;
   K.f = (v, d = 2) => (Number.isFinite(v) ? v.toFixed(d).replace(/^-(?=\d)/, '−') : '—');
   K.n = (v) => (Number.isFinite(v) ? Math.round(v).toLocaleString('en-US') : '—');
   K.pct = (v, d = 0) => (Number.isFinite(v) ? (v * 100).toFixed(d) + '%' : '—');
-  /* a number for TeX: thousands grouped as 16{,}000, a real minus sign */
   K.tn = function (v, d = 0) {
     if (!Number.isFinite(v)) return '?';
     const [i, f] = Math.abs(v).toFixed(d).split('.');
@@ -71,7 +67,6 @@
   };
   K.path = (pts) => (pts.length ? 'M' + pts.map((p) => p[0].toFixed(2) + ',' + p[1].toFixed(2)).join('L') : '');
 
-  /* ---------- random ---------- */
   K.rng = function (seed) {
     let a = seed >>> 0;
     return function () {
@@ -105,7 +100,6 @@
     return x + y > 0 ? x / (x + y) : 0.5;
   };
 
-  /* ---------- special functions ---------- */
   K.erf = function (x) {
     const s = x < 0 ? -1 : 1;
     x = Math.abs(x);
@@ -161,7 +155,6 @@
     const s = e.reduce((a, b) => a + b, 0);
     return e.map((v) => v / s);
   };
-  /* in-place radix-2 FFT; length must be a power of two */
   K.fft = function (re, im) {
     const n = re.length;
     for (let i = 1, j = 0; i < n; i++) {
@@ -191,7 +184,6 @@
   };
   K.hann = (n) => Float64Array.from({ length: n }, (_, i) => 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (n - 1)));
 
-  /* ---------- colour ---------- */
   K.css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   function hexRgb(hex) {
     hex = hex.replace('#', '');
@@ -200,7 +192,6 @@
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   }
   K.rgb = hexRgb;
-  /* sequential ramp between --seq-lo and --seq-hi; returns {fill, text} */
   K.heat = function (t) {
     const a = hexRgb(K.css('--seq-lo') || '#eef4fc'), b = hexRgb(K.css('--seq-hi') || '#1c5cab');
     t = K.clamp(t, 0, 1);
@@ -215,7 +206,6 @@
     { key: 'auth', name: 'authoritative', tok: '--auth' },
   ];
 
-  /* ---------- controls ---------- */
   let uid = 0;
   K.uid = (p) => (p || 'k') + ++uid;
   K.slider = function (parent, o) {
@@ -287,7 +277,6 @@
     };
   };
 
-  /* ---------- figures ---------- */
   K.fig = function (parent, o) {
     o = o || {};
     const wrap = K.h('div', { class: 'fig-wrap' });
@@ -310,7 +299,6 @@
     };
     return api;
   };
-  /* raster helper: draw into an offscreen canvas and return a data URL for an SVG <image> */
   K.raster = function (w, h, paint) {
     const cv = document.createElement('canvas');
     cv.width = w; cv.height = h;
@@ -347,13 +335,11 @@
     parent.append(box);
     return box;
   };
-  /* pointer position in SVG user units */
   K.pt = function (svg, ev) {
     const r = svg.getBoundingClientRect();
     const vb = svg.viewBox.baseVal;
     return [((ev.clientX - r.left) / r.width) * vb.width, ((ev.clientY - r.top) / r.height) * vb.height];
   };
-  /* make an SVG element draggable; cb(x, y) in user units */
   K.drag = function (svg, el, cb, end) {
     el.style.cursor = 'grab';
     el.style.touchAction = 'none';
@@ -375,7 +361,6 @@
     });
   };
 
-  /* ---------- tooltip ---------- */
   let tipEl = null;
   K.tip = {
     show(ev, rows) {
@@ -398,15 +383,12 @@
     return el;
   };
 
-  /* ---------- TeX (MathJax, loaded from cdnjs) ---------- */
   let chain = null, waited = 0;
   function whenMJ(cb) {
     const mj = window.MathJax;
     if (mj && mj.startup && mj.startup.promise && mj.tex2svgPromise) {
       if (!chain) {
-        /* MathJax's own CSS (it hides the screen-reader copy of each formula) is only added
-           automatically when it typesets the whole page, so add it once here */
-        chain = mj.startup.promise.then(() => { try { document.head.appendChild(mj.svgStylesheet()); } catch (e) { /* ignore */ } });
+        chain = mj.startup.promise.then(() => { try { document.head.appendChild(mj.svgStylesheet()); } catch (e) {} });
       }
       chain = chain.then(cb).catch((e) => console.warn('TeX render failed', e));
       return;
@@ -421,14 +403,11 @@
     whenMJ(() => window.MathJax.tex2svgPromise(tex, { display: !!display }).then((node) => { el.replaceChildren(node); el.classList.add('tex-ok'); }));
     return el;
   };
-  /* a formula that follows the figure: set() it again whenever the numbers change. Each line is one display
-     formula; renders are coalesced, so dragging only ever typesets the latest state */
   K.eq = function (parent) {
     const el = K.h('div', { class: 'eqlive tex', 'aria-live': 'polite' });
     parent.append(el);
     let want = null, shown = null, busy = false, lastW = -1;
     const key = (lines) => lines.join('\n');
-    /* formulas joined by \qquad at the top level become separate pieces that wrap onto new lines */
     function pieces(tex) {
       const out = [];
       let depth = 0, start = 0;
@@ -442,7 +421,6 @@
       out.push(tex.slice(start));
       return out.map((p) => p.trim()).filter(Boolean);
     }
-    /* a piece wider than the panel shrinks to fit (not below 11 px) */
     function fit() {
       const avail = el.clientWidth;
       lastW = avail;
@@ -473,7 +451,6 @@
       set(tex) { this.touched = true; want = [].concat(tex); render(); },
     };
   };
-  /* text with inline $...$ math and **bold** */
   K.rich = function (el, str) {
     const parts = String(str).split(/(\$[^$]+\$|\*\*[^*]+\*\*)/g);
     for (const p of parts) {

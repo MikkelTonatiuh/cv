@@ -1,20 +1,15 @@
-/* demos-results.js: chapter 4 (results), plus the start panel. */
 (function () {
   'use strict';
   const s = K.s, h = K.h;
   const setH = (F, need) => { if (F.H !== need) { F.H = need; F.svg.setAttribute('height', need); F.svg.setAttribute('viewBox', '0 0 ' + F.W + ' ' + need); } };
 
-  /* numbers reported in the thesis */
   const SPLITS = [['train', [2648, 2654, 2955]], ['validation', [331, 332, 369]], ['test', [331, 332, 370]]];
   const NTEST = [331, 332, 370];
   const CM = [[0.8, 0.06, 0.14], [0.28, 0.47, 0.25], [0.2, 0.07, 0.73]];
   const AUC = [0.86, 0.81, 0.85], AP = [0.65, 0.71, 0.74];
-  /* two-Gaussian score model per class (negatives ~ N(0,1), positives ~ N(mu, sd^2)),
-     fitted so that AUC and AP both match the values reported in 4.5 and 4.6 */
   const FIT = [{ mu: 1.2489, sd: 0.58 }, { mu: 1.3512, sd: 1.17 }, { mu: 1.3603, sd: 0.85 }];
   const shortName = (c) => (c === 2 ? 'auth.' : K.CLS[c].name);
 
-  /* ======================= overview panel ======================= */
   K.demo({
     id: 'overview', sec: '', title: 'Start here', page: 1, y: 0.02, also: [[25, 0.477]],
     build(api) {
@@ -43,7 +38,6 @@
     },
   });
 
-  /* ======================= 4.1 class distribution ======================= */
   K.demo({
     id: 'classdist', sec: '4.1', title: 'Class distribution per split', page: 27, y: 0.17,
     hint: 'Switch to counts.',
@@ -85,7 +79,6 @@
     },
   });
 
-  /* ======================= 4.3 accuracy vs UAR ======================= */
   K.demo({
     id: 'uar', sec: '4.3', title: 'Accuracy vs UAR', page: 33, y: 0.586, also: [[23, 0.409]],
     hint: 'Shrink the excited share.',
@@ -123,7 +116,6 @@
         panel(m.l, m.t, pw, ph, sh, 'Accuracy: widths = class shares', acc);
         panel(narrow ? m.l : m.l + pw + 50, narrow ? m.t + ph + 64 : m.t, pw, ph, [1 / 3, 1 / 3, 1 / 3], 'UAR: equal widths', uar);
         setH(F, narrow ? m.t + 2 * ph + 64 + 26 : F.H);
-        /* the same three recalls, weighted by class share (accuracy) or equally (UAR) */
         api.eq.set([
           String.raw`\text{Accuracy} = \sum_c \tfrac{n_c}{n}\,\text{Recall}_c = ` + sh.map((v, c) => String.raw`${K.f(v, 2)} \cdot ${rc(c)}`).join(' + ') + String.raw` = ${K.f(acc, 3)}`,
           String.raw`\text{UAR} = \tfrac13 \sum_c \text{Recall}_c = \tfrac13(${rc(0)} + ${rc(1)} + ${rc(2)}) = ${K.f(uar, 3)}`,
@@ -134,7 +126,6 @@
     },
   });
 
-  /* ======================= 4.4 confusion matrix ======================= */
   K.demo({
     id: 'confusion', sec: '4.4', title: 'Confusion matrix', page: 35, y: 0.562, also: [[37, 0.214]],
     hint: 'Switch views, and hover a cell.',
@@ -180,7 +171,6 @@
         F.add(hi);
         if (view === 'counts') for (let j = 0; j < 3; j++) F.add(K.label(gx + j * cell + cell / 2, gy + 3 * cell + 18, 'Σ ' + K.n(colTot[j]), 'tick mono', 'middle'));
         setH(F, gy + 3 * cell + (view === 'counts' ? 30 : 12));
-        /* what the diagonal means in the current view */
         const diag = (f) => [0, 1, 2].map((k) => String.raw`\class{${TC[k]}}{${f(k)}}`).join(',\\ ');
         api.eq.set(view === 'rows'
           ? String.raw`\text{Recall}_i = P(\hat y = i \mid y = i) = (${diag((k) => K.f(CM[k][k], 2))}) \qquad \text{UAR} = ${K.f((CM[0][0] + CM[1][1] + CM[2][2]) / 3, 3)}`
@@ -193,7 +183,6 @@
     },
   });
 
-  /* ======================= shared score-model helpers ======================= */
   const tpr = (c, t) => 1 - K.Phi((t - FIT[c].mu) / FIT[c].sd);
   const fpr = (t) => 1 - K.Phi(t);
   function curvePts(c) { const out = []; for (let i = 0; i <= 240; i++) { const t = 6 - (12 * i) / 240; out.push([fpr(t), tpr(c, t), t]); } return out; }
@@ -208,7 +197,6 @@
     return ap;
   }
 
-  /* ======================= 4.5 ROC ======================= */
   K.demo({
     id: 'roc', sec: '4.5', title: 'ROC curves and thresholds', page: 38, y: 0.567, also: [[40, 0.175]],
     hint: 'Drag the threshold from one end to the other.',
@@ -225,7 +213,6 @@
         const m = { l: 40, r: 14, t: 30 };
         const pw = narrow ? W - m.l - m.r : (W - m.l - m.r - 50) * 0.55, ph = narrow ? 170 : F.H - m.t - 40;
         const key = K.CLS[c].key;
-        /* densities */
         const x = K.scale(-3.2, 5, m.l, m.l + pw), y = K.scale(0, 0.75, m.t + ph, m.t);
         F.add(K.label(m.l, m.t - 12, 'Model score for “' + K.CLS[c].name + '”', 'lbl-b'));
         K.axes(F.svg, { x, y, xt: [-2, 0, 2, 4], yt: [], fx: String, grid: false });
@@ -246,7 +233,6 @@
         F.add(K.label(x(th) + 5, y(0) - 6, 'threshold', 'tick'));
         F.add(K.label(x(-3), y(0.42), 'not ' + K.CLS[c].name, 'tick'));
         F.add(K.label(x(FIT[c].mu), y(K.npdf(0, 0, FIT[c].sd)) - 8, K.CLS[c].name, 'lbl-b', 'middle'));
-        /* ROC */
         const rx0 = narrow ? m.l : m.l + pw + 50, ry0 = narrow ? m.t + ph + 66 : m.t;
         const side = narrow ? Math.min(W - m.l - m.r, 260) : Math.min(W - m.r - rx0, ph);
         const rx = K.scale(0, 1, rx0, rx0 + side), ry = K.scale(0, 1, ry0 + side, ry0);
@@ -261,7 +247,6 @@
         F.add(s('circle', { cx: rx(Fp), cy: ry(T), r: 6, class: 'f-ink ring' }));
         F.add(K.label(rx(1), ry(0) - 8, 'AUC = ' + K.f(AUC[c], 2), 'lbl-b', 'end'));
         setH(F, narrow ? ry0 + side + 36 : Math.max(m.t + ph + 30, ry0 + side + 36));
-        /* the threshold turns the two bells into one point on the curve */
         const SP = String.raw`\class{${TC[c]}}{s_+}`;
         api.eq.set([
           String.raw`\theta = ${K.f(th, 2)}: \quad \text{TPR} = P(${SP} > \theta) = \class{${TC[c]}}{${K.f(T, 2)}} \qquad \text{FPR} = P(s_- > \theta) = ${K.f(Fp, 2)}`,
@@ -274,7 +259,6 @@
     source: 'Curves rebuilt from the reported AUC and AP with a two-bell-curve score model, so they match those numbers, not every step of the plots in the thesis.',
   });
 
-  /* ======================= 4.6 precision-recall ======================= */
   K.demo({
     id: 'pr', sec: '4.6', title: 'Precision and recall', page: 40, y: 0.523, also: [[41, 0.54]],
     hint: 'Set the class share to 10%, then raise the threshold.',
@@ -305,7 +289,6 @@
         F.add(s('path', { d: K.path(pts.map((p) => [x(p[0]), y(p[1])])), class: 'ln s-' + key, 'stroke-width': 2.5 }));
         const R = tpr(c, th), Fp = fpr(th), den = pi * R + (1 - pi) * Fp, P = den > 1e-12 ? (pi * R) / den : 1;
         F.add(s('circle', { cx: x(R), cy: y(P), r: 6, class: 'f-ink ring' }));
-        /* precision and recall against threshold */
         const tx0 = narrow ? m.l : m.l + side + 50, ty0 = narrow ? m.t + side + 70 : m.t;
         const tw = narrow ? W - m.l - m.r : W - m.r - tx0, tph = narrow ? 170 : side;
         const xt = K.scale(-2, 4.5, tx0, tx0 + tw), yt = K.scale(0, 1, ty0 + tph, ty0);
@@ -322,7 +305,6 @@
         F.add(K.label(tx0 + 4, yt(0.93), 'recall', 'tick'));
         F.add(s('line', { x1: xt(th), x2: xt(th), y1: ty0, y2: ty0 + tph, class: 's-ink', 'stroke-width': 1.5 }));
         setH(F, narrow ? ty0 + tph + 36 : Math.max(F.H, m.t + side + 40));
-        /* precision with the current share and threshold plugged in */
         const PI = K.f(pi, 2), R2 = K.f(R, 2);
         api.eq.set([
           String.raw`\class{tt1}{\text{Precision}} = \frac{\pi\,\text{TPR}}{\pi\,\text{TPR} + (1 - \pi)\,\text{FPR}} = \frac{${PI} \cdot ${R2}}{${PI} \cdot ${R2} + ${K.f(1 - pi, 2)} \cdot ${K.f(Fp, 2)}} = \class{tt1}{${K.f(P, 2)}}`,
@@ -335,7 +317,6 @@
     source: 'Same score model as 4.5.',
   });
 
-  /* ======================= 4.8 in the app ======================= */
   K.demo({
     id: 'appsim', sec: '4.8', title: 'What a user would hear', page: 45, y: 0.499,
     hint: 'Switch speakers.',
@@ -359,7 +340,6 @@
           F.add(s('rect', { x: gx + col * cell + 1, y: gy + row * cell + 1, width: cell - 3, height: cell - 3, rx: 3, class: 'f-' + K.CLS[k].key + (k === who ? '' : ' soft') }));
         });
         setH(F, gy + cell * 10 + 12);
-        /* one row of the confusion matrix, as 100 attempts */
         api.eq.set(String.raw`100 \times P(\hat y \mid y = \class{${TC[who]}}{\text{${K.CLS[who].name}}}) = (${counts.map((v, k) => String.raw`\class{${TC[k]}}{${k === who ? String.raw`\underline{${v}}` : v}}`).join(',\\ ')})`);
       }
       draw();

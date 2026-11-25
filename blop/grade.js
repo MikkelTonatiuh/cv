@@ -11,13 +11,6 @@ export const TINTS = {
   bad: [0.98, 0.68, 0.66],
 };
 
-/* While you speak, Blop shows how the words scored so far are going: the word check scores the first words of the
-   line as soon as they have been said (blop/clarity.js, wordsReached), so what Blop shows comes from the same
-   scoring as the result. "good" when they are clear, "mid" when some were hard to hear; never "bad", that is for the
-   result. Until two words can be judged it only listens. A last word or two that the model can't find in the audio
-   at all (below cfg.unsaid) were most likely not said yet, and are left out. How loud the voice is says nothing about
-   this: an earlier version judged the loudness, and showed an angry or confused Blop during takes that then scored
-   90 and more. */
 export function liveBand(words, cfg = LIVE) {
   if (!Array.isArray(words)) return "rest";
   let n = words.length;
@@ -26,10 +19,6 @@ export function liveBand(words, cfg = LIVE) {
   return summarize(words.slice(0, n)).band === "good" ? "good" : "mid";
 }
 
-/* One reading that finds trouble can be the model's noise: on 61 learner takes of 14 to 30 words, a lone one showed
-   on 2 of the 30 that ended clear, and none did when two in a row were needed. So Blop shows "mid" once two readings
-   in a row say so; a clear reading shows at once, and a reading that says nothing (rest) leaves things as they are.
-   shown is what Blop shows now, prev the reading before this one, read this one. */
 export function showLive(shown, prev, read) {
   if (read === "good") return "good";
   if (read === "mid" && prev === "mid") return "mid";

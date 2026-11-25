@@ -1,10 +1,3 @@
-/* Runs the word scoring off the main thread, so Blop keeps moving while it listens.
-   in:  { type: "init", lib, local }       out: { type: "progress", pct } ... { type: "ready" }
-        { type: "score", id, pcm, text, heard }    { type: "scored", id, words, ms }, then, unless heard is false,
-                                                    { type: "heard", id, text }
-        { type: "hear", id, pcm }                  { type: "heard", id, text }
-        { type: "cancel", id }                     a score that has not started is dropped (it answers with no words)
-   Jobs run one at a time, in the order they came. Errors come back as { type: "error", id?, message }. */
 import { MODEL, downloadMeter, wordScores } from "./clarity.js";
 
 let asr = null, proc = null, Tensor = null;
@@ -24,8 +17,6 @@ async function init({ lib, local }) {
   const { env, pipeline, AutoProcessor } = T;
   Tensor = T.Tensor;
   if (local) {
-    /* a copy of the model and runtime on another local port, for testing: the model's files are read from there
-       instead of Hugging Face (a "local" model path can't be another origin) */
     env.remoteHost = local;
     env.remotePathTemplate = "models/{model}/";
     env.backends.onnx.wasm.wasmPaths = local + "ort/";
@@ -39,12 +30,11 @@ async function init({ lib, local }) {
   proc = await AutoProcessor.from_pretrained(MODEL);
 }
 
-/* what it made of the take, for the board to show once the words are up */
 async function hear({ id, pcm }) {
   try {
     const out = await asr(pcm);
     self.postMessage({ type: "heard", id, text: String(out.text || "").trim() });
-  } catch { /* the words are already on the board */ }
+  } catch {}
 }
 
 async function score({ id, pcm, text, heard }) {
@@ -52,7 +42,6 @@ async function score({ id, pcm, text, heard }) {
   const t0 = performance.now();
   const spaced = " " + text;
   const tokens = asr.tokenizer.tokenize(spaced);
-  /* encode() wraps the line in the model's start, no-timestamps and end markers */
   const ids = Array.from(asr.tokenizer.encode(spaced));
   const lead = ids.length - tokens.length - 1;
   if (lead < 1) throw new Error("unexpected tokens");

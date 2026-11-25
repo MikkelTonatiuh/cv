@@ -266,7 +266,6 @@ class Component extends DCLogic {
     this.stopHardware();
   }
 
-  /* ---------- takes ---------- */
   loadTakes() {
     try {
       const data = JSON.parse(localStorage.getItem(this.KEY) || "[]");
@@ -299,7 +298,6 @@ class Component extends DCLogic {
     return Math.floor(h / 24) + "d ago";
   }
 
-  /* ---------- flow ---------- */
   pick() { return this.PROMPTS[Math.floor(Math.random() * this.PROMPTS.length)]; }
   go(view) {
     this.setState({ view, barsOn: false });
@@ -321,7 +319,6 @@ class Component extends DCLogic {
     return "idle";
   }
 
-  /* ---------- recording ---------- */
   async startRecording() {
     if (this.rec) return;
     this.samples = [];
@@ -391,7 +388,6 @@ class Component extends DCLogic {
     setTimeout(() => this.finish(samples), 1200);
   }
 
-  /* Local envelope-based read of the take: the thesis model server is not reachable here. */
   finish(samples) {
     const target = this.state.prompt.e;
     const useful = samples.filter((s) => s > 0.02);
@@ -440,7 +436,6 @@ class Component extends DCLogic {
     this.go(mixed ? "unsure" : "good");
   }
 
-  /* ---------- canvas painting ---------- */
   drawWave(v) {
     const canvas = this.waveEl;
     if (!canvas) return;

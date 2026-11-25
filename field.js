@@ -1,24 +1,9 @@
-/* One loss surface for the page. Its minimum is the name.
-
-   1. rasterName  – the name drawn as real text, so it spells correctly
-   2. edt         – exact Euclidean distance transform of that raster
-   3. field       – loss(x,y) = distance-to-name + low-frequency value noise
-   4. contours    – marching squares on the field, levels spread to the edges
-   5. descend     – gradient descent on that surface: the approach on the terrain, then one run
-                    down each stroke's valley (valley.js), which is what writes the name
-
-   Everything lives in document pixels, so the trail sits in its own basin. */
 
 import { strokesFromTrack, shapeStrokes, fitToTerrain, buildValleys, writeName } from "./valley.js";
 
 export const NAME = "Mikkel T. Ch\u00e1vez Petersen";
-/* A hand, not a typeface set in a hand's clothing: the skeleton we trace is
-   only ever as good as the letterforms it comes from, and a monoline script
-   thins to a clean single centreline where a grotesque leaves stubs at every
-   stem join. */
 export const FONT = (px) => `600 ${px}px Caveat, "Segoe Script", "Bradley Hand", cursive`;
 
-/* ---------- name raster ---------- */
 export function rasterName(fontPx, ss = 2) {
   const probe = document.createElement("canvas").getContext("2d");
   probe.font = FONT(fontPx);
@@ -43,11 +28,6 @@ export function rasterName(fontPx, ss = 2) {
   const ink = new Uint8Array(c.width * c.height);
   for (let i = 0, n = ink.length; i < n; i++) ink[i] = px[i * 4 + 3] > 110 ? 1 : 0;
 
-  /* The period is the one glyph thinning cannot survive: a round blob has no
-     centreline, so the skeletonizer lays it down as a row of cells and the
-     initial reads "T_". It is also the one glyph whose position we can compute
-     exactly, so lift it out of the raster and hand its centre to the track,
-     which draws it the same way it draws the i-dots. */
   const dots = [];
   const di = NAME.indexOf(".");
   if (di > 0) {
@@ -63,7 +43,6 @@ export function rasterName(fontPx, ss = 2) {
   return { ink, w: c.width, h: c.height, ss, cssW: w, cssH: h, fontPx, dots };
 }
 
-/* ---------- exact EDT (Felzenszwalb & Huttenlocher) ---------- */
 const INF = 1e20;
 function edt1d(f, d, v, z, n) {
   let k = 0;
@@ -84,7 +63,6 @@ function edt1d(f, d, v, z, n) {
   }
 }
 
-/* squared EDT of a binary grid: 0 inside ink, growing outward */
 export function edt(bin, w, h) {
   const out = new Float64Array(w * h);
   for (let i = 0; i < out.length; i++) out[i] = bin[i] ? 0 : INF;
@@ -105,7 +83,6 @@ export function edt(bin, w, h) {
   return out;
 }
 
-/* ---------- noise ---------- */
 function mulberry32(a) {
   return function () {
     a |= 0; a = (a + 0x6D2B79F5) | 0;
@@ -129,12 +106,10 @@ function noiseAt(L, x, y) {
   return t + (u - t) * fy;
 }
 
-/* ---------- the field ---------- */
 export function buildField({ docW, docH, raster, nameX, nameY, cell = 4, seed = 0x5eed1a9 }) {
   const cols = Math.ceil(docW / cell) + 1;
   const rows = Math.ceil(docH / cell) + 1;
 
-  // stamp the name into the coarse grid, then distance-transform the whole page
   const bin = new Uint8Array(cols * rows);
   const s = raster.ss;
   for (let j = 0; j < rows; j++) {
@@ -152,11 +127,6 @@ export function buildField({ docW, docH, raster, nameX, nameY, cell = 4, seed = 
   const rnd = mulberry32(seed);
   const L1 = lattice(16, rnd), L2 = lattice(32, rnd), L3 = lattice(64, rnd), L4 = lattice(128, rnd);
 
-  /* Terrain first, name second. The distance transform is passed through log1p
-     so it only dominates within a few tens of pixels of the letters; past that
-     the octave noise and the placed features take over, which is what gives
-     ridges, saddles and competing basins instead of one set of rings. A wide
-     well centred on the name then guarantees it is still the global minimum. */
   const feats = [];
   const band = nameY + raster.cssH;
   for (let i = 0; i < 6; i++) {
@@ -177,36 +147,11 @@ export function buildField({ docW, docH, raster, nameX, nameY, cell = 4, seed = 
   }
 
   const nameCx = nameX + raster.cssW / 2, nameCy = nameY + raster.cssH / 2;
-  /* The well is deliberately tight. A broad one makes the whole header a radial
-     basin, and steepest descent on a radial basin is a straight line — the run
-     then ignores the terrain it is drawn on. Keeping it local to the letters
-     leaves the octave noise and placed features shaping the contours the run
-     actually crosses, while the name is still the global minimum. */
   const nameS = Math.max(150, raster.cssW * 0.42);
 
-  /* A corridor in the surface, not a term in the integrator.
-     Across the strip above the letters the field gets a valley: a floor that
-     slopes down to the left toward the name's well, plus quadratic walls that
-     hold the iterate in the strip. The envelope is flat-topped (quartic, not
-     Gaussian) so the floor is level in y where the run travels — a Gaussian
-     weight would make the field rise downward and push the run out of the band.
-     Both terms ramp to zero at the name's left edge so the well alone governs
-     convergence. Slope is ~1.7x the steepest noise gradient here, so the true
-     gradient points left-and-down the whole way in while the noise still
-     visibly deflects it. The drawn contours pick this up, so the band reads as
-     a valley feeding a basin. */
-  /* The valley floor is not level: it runs in at the top of the strip, holds
-     that height across the traverse, then plunges into the well over the last
-     stretch — so the iterate tracks it down by gradient alone and never meets
-     a clamp. */
   const topY = Math.max(8, nameY - 6 - raster.cssH * 0.85);
   const penY = nameY + raster.cssH * 0.25;
   const DIVE = 70;
-  /* Conditioning, set deliberately: soft walls and a steep floor. Stiff walls
-     with a step size big enough to cross the page make the iterate oscillate
-     across the valley without descending — the step exceeds 2(1+mu)/L for the
-     wall curvature. Softer walls put it back inside the stability limit while
-     the steeper floor keeps the traverse to a few dozen steps. */
   const corrH = Math.max(24, raster.cssH * 0.8);
   const TILT = 2.2, CHAN = 450;
   const corrAt = (x) => {
@@ -223,9 +168,6 @@ export function buildField({ docW, docH, raster, nameX, nameY, cell = 4, seed = 
         + noiseAt(L1, x / 540, y / 540) * 140
         + noiseAt(L2, x / 225, y / 225) * 62
         + noiseAt(L3, x / 92, y / 92) * 24
-        // a finer octave: the three above all have wavelengths longer than the
-        // header band, which makes that band a near-flat plane with no
-        // curvature for a run to follow
         + noiseAt(L4, x / 41, y / 41) * 11;
       for (let k = 0; k < feats.length; k++) {
         const ft = feats[k];
@@ -235,19 +177,8 @@ export function buildField({ docW, docH, raster, nameX, nameY, cell = 4, seed = 
       const ndx = x - nameCx, ndy = y - nameCy;
       v -= 330 * Math.exp(-(ndx * ndx + ndy * ndy) / (2 * nameS * nameS));
       const u = (y - corrAt(x)) / corrH;
-      /* Walls that keep growing: a quadratic damped by a wide Gaussian, so the
-         channel has a real basin of attraction several widths deep instead of
-         vanishing a short way off the floor. The tilt uses a broad flat-topped
-         envelope so the floor stays level in y where the run travels. */
       const wall = CHAN * u * u * Math.exp(-((u * u) / 18));
       const wy = Math.exp(-((u * u * u * u) / 40));
-      /* The corridor has to fade in from the left without leaving a crease.
-         A clamp or a max() is C1-discontinuous, and contour density tracks
-         curvature, so either one prints a vertical seam of crowded lines at the
-         switch-on point. This is a quintic smoothstep (C2) spread over 420px and
-         started 120px left of the name, so the tilt term needs no max() of its
-         own and the density it adds is spread out instead of stacked on the text
-         margin. */
       const t = Math.min(1, Math.max(0, (x - nameX + 120) / 420));
       const sx = t * t * t * (t * (t * 6 - 15) + 10);
       v += (TILT * (x - nameX) * wy + wall) * sx;
@@ -275,17 +206,11 @@ export function buildField({ docW, docH, raster, nameX, nameY, cell = 4, seed = 
   return { f, cols, rows, cell, max, min, sample, grad };
 }
 
-/* ---------- contour extraction ---------- */
 const r1 = (n) => Math.round(n * 10) / 10;
 
 export function contours(field, levels = 22) {
   const { f, cols, rows, cell, max, min } = field;
   const isos = [];
-  /* Quantile-spaced, not evenly spaced. The valley the run descends adds a
-     large monotone rise across the header, and even spacing would spend most
-     levels on it and leave the rest of the page nearly blank. Quantiles put a
-     comparable number of lines everywhere, and they are still exact level sets
-     of the same surface. */
   const step = Math.max(1, Math.floor(f.length / 24000));
   const samp = [];
   for (let i = 0; i < f.length; i += step) samp.push(f[i]);
@@ -327,8 +252,6 @@ export function contours(field, levels = 22) {
   return segs;
 }
 
-/* Group contour segments into rings by distance from a point, so a pulse can
-   travel outward from an epicentre instead of level by level. */
 export function ringsAround(segs, cx, cy, count = 30) {
   let maxD = 0;
   const d = new Float64Array(segs.length);
@@ -339,11 +262,6 @@ export function ringsAround(segs, cx, cy, count = 30) {
     if (v > maxD) maxD = v;
   }
   const step = (maxD || 1) / count;
-  /* Two strings per ring: ordinary lines, and every fifth level drawn as an
-     index contour. That is the standard topographic convention and it is what
-     makes spacing legible — close-set lines read as steep only once there is a
-     heavier line every few levels to measure them against. Ring order is
-     preserved, so the convergence echo still travels outward unchanged. */
   const buckets = Array.from({ length: count }, () => ({ main: "", index: "" }));
   for (let i = 0; i < segs.length; i++) {
     const b = Math.min(count - 1, Math.floor(d[i] / step));
@@ -356,12 +274,6 @@ export function ringsAround(segs, cx, cy, count = 30) {
   return out;
 }
 
-/* ---------- centerline writing track ----------
-   Zhang-Suen thinning of the name raster gives a one-pixel skeleton: the
-   medial axis of the letterforms. Walking it in reading order is what a pen
-   does, so the trail writes the letters instead of outlining them. The
-   skeleton is also exactly the floor of the distance field the background
-   contours, so pen and terrain remain the same object. */
 export function skeletonize(src, w, h) {
   const im = Uint8Array.from(src);
   const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? 0 : im[y * w + x]);
@@ -400,14 +312,9 @@ export function skeletonize(src, w, h) {
 
 export function nameTrack(raster, nameX, nameY) {
   const { ink, w, h, ss } = raster;
-  // the raster knows its own em; fall back to its height if it was built elsewhere
   const fontPx = raster.fontPx || h / ss / 1.32;
   const given = raster.dots || [];
 
-  /* Separate the small marks — i-dots, the period after T, the accent on á —
-     before thinning. They are their own connected components, and a skeleton
-     of a blob that small is noise; drawing them as marks keeps them, while the
-     letters keep the strict spur filter that makes the shapes precise. */
   const label = new Int32Array(w * h).fill(-1);
   const body = new Uint8Array(w * h);
   const marks = [];
@@ -435,10 +342,6 @@ export function nameTrack(raster, nameX, nameY) {
         }
       }
     }
-    /* A dot is a fraction of the em, not a fixed number of cells: this
-       threshold has to grow with the raster or a period at a larger size
-       falls through to the thinner, which collapses a round blob into a
-       one-pixel dash sitting on the baseline. */
     if (cells.length <= 34 * ss * ss) {
       let sx = 0, sy = 0;
       for (const q of cells) { sx += q % w; sy += (q / w) | 0; }
@@ -482,11 +385,6 @@ export function nameTrack(raster, nameX, nameY) {
   for (const [x, y] of ends) if (!seen[idx(x, y)]) walk(x, y);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (on(x, y) && !seen[idx(x, y)]) walk(x, y);
 
-  /* Second net, after thinning. A period whose ink area lands just over the
-     component threshold survives to the skeletonizer, which collapses a round
-     blob to a single row of cells — a dash on the baseline where a dot
-     belongs. Anything this short and this flat was a dot before it was
-     thinned, so take it back out of the letters and re-file it as a mark. */
   const flatMax = 0.10 * fontPx * ss, spanMax = 0.34 * fontPx * ss;
   for (let i = strokes.length - 1; i >= 0; i--) {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -497,14 +395,12 @@ export function nameTrack(raster, nameX, nameY) {
       if (sy > y1) y1 = sy;
     }
     const bw = x1 - x0, bh = y1 - y0;
-    // flat in Y specifically: a thin vertical sliver is a real stem, not a dot
     if (bw <= spanMax && bh <= flatMax) {
       marks.push([(x0 + x1) / 2, (y0 + y1) / 2]);
       strokes.splice(i, 1);
     }
   }
 
-  // each small mark becomes a short stroke, so the pen renders it as a dot
   const rMark = Math.max(0.5, 0.5 * ss);
   for (const [mx, my] of marks.concat(given)) {
     strokes.push([[mx - rMark, my], [mx, my], [mx + rMark, my]]);
@@ -512,8 +408,6 @@ export function nameTrack(raster, nameX, nameY) {
 
   strokes.sort((a, b) => Math.min(...a.map((p) => p[0])) - Math.min(...b.map((p) => p[0])));
 
-  // strict left-to-right, but each stroke is entered from whichever end is
-  // nearer the pen: reading order is preserved and the travel moves stay short.
   const ordered = strokes
     .map((s) => s.map(([x, y]) => [nameX + x / ss, nameY + y / ss]))
     .map((pts) => pts.map((p, i) => {
@@ -532,8 +426,6 @@ export function nameTrack(raster, nameX, nameY) {
       const dt = (tail[0] - cursor[0]) ** 2 + (tail[1] - cursor[1]) ** 2;
       if (dt < dh) run = s.slice().reverse();
     }
-    // finish on the rightmost point of the last stroke, so the run converges at
-    // the end of the name rather than stopping inside a letter
     if (si === ordered.length - 1 && run[run.length - 1][0] < run[0][0]) run = run.slice().reverse();
     run.forEach((p, i) => { track.push(p); pen.push(i > 0 || !cursor); });
     cursor = track[track.length - 1];
@@ -541,10 +433,6 @@ export function nameTrack(raster, nameX, nameY) {
   return { pts: track, pen };
 }
 
-
-/* the corridor floor at a given x: the y in [y0,y1] with the lowest field
-   value. Used to initialise the run on the valley floor rather than at an
-   arbitrary height, and to find a start whose true gradient leads inward. */
 export function floorAt(field, x, y0, y1) {
   let best = Infinity, by = y0;
   for (let y = y0; y <= y1; y += 1) {
@@ -554,7 +442,6 @@ export function floorAt(field, x, y0, y1) {
   return by;
 }
 
-/* highest grid point inside a box — a real peak to start the descent from */
 export function peakIn(field, x0, x1, y0, y1) {
   const { f, cols, rows, cell } = field;
   let best = -Infinity, bx = x0, by = y0;
@@ -569,19 +456,7 @@ export function peakIn(field, x0, x1, y0, y1) {
   return [bx, by];
 }
 
-/* ---------- the run ----------
-   Two kinds of descent on the one surface.
-
-   The approach comes in from the right edge and runs down the page's contour terrain with momentum, annealed
-   noise and per-coordinate step sizes (RMSProp), until it reaches the name. Every step is -a * (grad f + noise)
-   on the field the contours are drawn from; nothing steers it. It reaches the name because the terrain has a
-   corridor sloping into it (see buildField), not because anything pushes it there.
-
-   The name is then written by one gradient descent per stroke, each started at the top of that stroke's valley
-   (see valley.js). The valleys are part of the surface, so the pen is again only ever rolling downhill. Between
-   strokes the pen lifts, which is a restart of the optimiser, drawn as a faint straight line. */
 export function descend(field, track, { start, entry, vmax = 10, docW = 1e9, docH = 1e9, bandTop = 14, bandBottom = 1e9, seed = 0x13579b, valleys = null } = {}) {
-  /* the valleys are cut into this terrain, so their floors are made steeper than anything the terrain does under them */
   const terrain = (x, y) => field.grad(x, y);
   let valleysUsed = valleys;
   if (!valleysUsed) {
@@ -603,17 +478,11 @@ export function descend(field, track, { start, entry, vmax = 10, docW = 1e9, doc
   let v = entry ? entry.slice() : [0, 0];
   const tx = first[0];
   const mo = 0.5;
-  /* RMSProp with momentum, on the field's own gradient. A valley this ill-conditioned (soft along, stiff across)
-     defeats a single global step size: large enough to cross the page and it oscillates across the walls without
-     descending; small enough to be stable and it never arrives. Dividing each component by the running RMS of its
-     own gradient is the standard cure, so the along-valley axis gets long steps and the stiff cross-valley axis
-     short ones, with no hand-set anisotropy. */
   let a = 11, T = 1, sq = null;
   const beta = 0.9, eps = 1e-6;
   for (let i = 0; i < 70; i++) {
     const [fx, fy] = field.grad(p[0], p[1]);
     const gx = fx * 5.5, gy = fy * 5.5;
-    // minibatch noise, annealed: the S in SGD
     const ex = gx + (rnd() * 2 - 1) * T * 0.4, ey = gy + (rnd() * 2 - 1) * T * 0.4;
     sq = sq ? [beta * sq[0] + (1 - beta) * ex * ex, beta * sq[1] + (1 - beta) * ey * ey] : [ex * ex, ey * ey];
     v = [mo * v[0] - a * ex / (Math.sqrt(sq[0]) + eps), mo * v[1] - a * ey / (Math.sqrt(sq[1]) + eps)];
@@ -629,7 +498,6 @@ export function descend(field, track, { start, entry, vmax = 10, docW = 1e9, doc
     if (p[0] <= tx + 6) break;
   }
 
-  // pen lift: from where the approach stopped to the top of the first valley, drawn faintly
   const lift = 22;
   const from = traj.length ? traj[traj.length - 1] : [first[0], first[1] - 40];
   for (let i = 1; i <= lift; i++) {
@@ -640,7 +508,6 @@ export function descend(field, track, { start, entry, vmax = 10, docW = 1e9, doc
   const writeStart = traj.length;
   const penStart = traj[traj.length - 1].slice();
 
-  // writing: one descent per valley, each from the top; between them the pen lifts
   const runs = writeName(valleysUsed, terrain);
   let at = penStart;
   for (const r of runs) {
@@ -652,8 +519,6 @@ export function descend(field, track, { start, entry, vmax = 10, docW = 1e9, doc
   return { pts: traj, mode, iterates, grads, runLen: iterates.length, writeStart, penStart, valleys: valleysUsed, runs };
 }
 
-/* split a run into contiguous same-mode pieces, with each piece's start
-   distance along the whole run, so the write-on stays one timed sweep */
 export function pieces(run) {
   const { pts, mode } = run;
   const out = [];

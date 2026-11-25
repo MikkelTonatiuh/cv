@@ -1,8 +1,3 @@
-/* Lines a take up with the example recording of the same line, by how the two sound, so that the example's word
-   times (known exactly, from voice/models/lines.json) can be carried over to the take. Each recording becomes a
-   sequence of spectral snapshots (MFCCs, 10 ms apart); dynamic time warping finds the cheapest way to stretch one
-   onto the other; a moment in the example is where its warped partner is in the take.
-   Speakers differ, so each recording's features are centred and scaled on their own. */
 
 import { settle, speechRuns } from "./replay.js";
 
@@ -32,7 +27,6 @@ function setup() {
   return tables;
 }
 
-/* in-place radix-2 FFT of re/im, length NFFT */
 function fft(re, im, T) {
   const n = re.length;
   for (let i = 1, j = 0; i < n; i += 1) {
@@ -55,8 +49,6 @@ function fft(re, im, T) {
   }
 }
 
-/* MFCCs of the stretch [from, to] seconds of a 16 kHz recording, one frame every 10 ms, each coefficient centred
-   and scaled over the stretch. Returns { frames: Float32Array[], from } */
 export function features(pcm, from, to) {
   const T = setup();
   const a = Math.max(0, Math.floor(from * SR)), b = Math.min(pcm.length, Math.ceil(to * SR));
@@ -90,10 +82,6 @@ export function features(pcm, from, to) {
   return { frames, from: a / SR };
 }
 
-/* The cheapest way to stretch the example onto the take, as for each example frame the take frame it lines up with.
-   Both are trimmed to their words, so the two ends line up. Moving along the diagonal is free; a step that stretches
-   one recording against the other costs a little, so a take that runs slow or fast can still follow, and the path stays
-   within a band around the straight line between the ends. */
 export function warp(ex, take, { band = 0.5, stretch = 0.3 } = {}) {
   const N = ex.length, M = take.length;
   if (!N || !M) return new Array(N).fill(0);
@@ -117,7 +105,6 @@ export function warp(ex, take, { band = 0.5, stretch = 0.3 } = {}) {
     }
   }
   if (D[N - 1][M - 1] >= INF) return Array.from({ length: N }, (_, k) => line(k));
-  /* walk back from the end */
   const at = Array.from({ length: N }, () => []);
   let i = N - 1, j = M - 1;
   while (i >= 0 && j >= 0) {
@@ -128,8 +115,6 @@ export function warp(ex, take, { band = 0.5, stretch = 0.3 } = {}) {
   }
   return at.map((js, k) => (js.length ? js.reduce((x, y) => x + y, 0) / js.length : line(k)));
 }
-/* The example's word spans (seconds in the example's recording) carried over to the take: `ex` and `take` are
-   features() results, and the spans and the returned spans are in seconds of their own recordings. */
 export function carry(spans, ex, take, hop = HOP / SR) {
   const path = warp(ex.frames, take.frames);
   const at = (t) => {
@@ -139,10 +124,6 @@ export function carry(spans, ex, take, hop = HOP / SR) {
   return spans.map(([a, b]) => [at(a), at(b)]);
 }
 
-/* The example's words, as spans in seconds of its own recording, from where their sounds are (the line's `words` in
-   voice/models/lines.json): neighbours meet halfway. `from` and `to`, when given, are where the example's speech starts
-   and ends as the analysis sees it (the way it sees a take's), and the first and last words reach them, so the example
-   and a take begin and end at the same kind of moment. Without them the first and last reach a little beyond their sounds. */
 export function exampleSpans(anchors, from, to) {
   const n = anchors.length;
   const a = from === undefined ? Math.max(0, anchors[0][0] - 0.1) : from;
@@ -153,12 +134,6 @@ export function exampleSpans(anchors, from, to) {
   return spans;
 }
 
-/* Where each word of the line is said in a take, from the example's. ex: { anchors, pcm, feat? } with the example's
-   16 kHz samples (feat is the features() of its words, kept from last time); take: { pcm, analysis } with the take's
-   16 kHz samples and its analysis (voice/engine.js). Returns [{ w, from, to }] in seconds of the take's recording.
-   On 160 adult learners' takes against a synthetic voice this had the right word lit for 78% of the speech, with
-   boundaries a median 30 ms off the forced alignment of the take (90th percentile 250 ms); with other actors'
-   neutral readings, 86%. */
 export function takeSpans(words, ex, take) {
   const spans = exampleSpans(ex.anchors, ex.run && ex.run.from, ex.run && ex.run.to);
   const exF = ex.feat || features(ex.pcm, Math.max(0, spans[0][0] - 0.05), spans[spans.length - 1][1] + 0.05);
@@ -166,8 +141,6 @@ export function takeSpans(words, ex, take) {
   const tF = features(take.pcm, Math.max(0, from - 0.05), to + 0.05);
   const at = (t) => Math.min(Math.max(t, from), to);
   const out = carry(spans, exF, tF).map((s, i) => ({ w: words[i], from: at(s[0]), to: at(Math.max(s[0], s[1])) }));
-  /* with ex.run (where the example's speech starts and ends) both recordings are trimmed the same way: the first word
-     begins and the last ends where the analysis finds the take's speech to */
   if (ex.run && out.length) { out[0].from = from; out[out.length - 1].to = to; }
   return out;
 }

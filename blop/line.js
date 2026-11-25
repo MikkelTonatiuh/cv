@@ -74,7 +74,6 @@ export function coachingText(results) {
   return blopVoice(bits.join(" "));
 }
 
-/* a made-up read of the line for "Continue without a microphone": the longest word comes out a little soft */
 export function simulateResult(text) {
   const words = String(text || "").split(/\s+/).filter(Boolean);
   if (!words.length) words.push("hello");

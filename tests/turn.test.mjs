@@ -1,12 +1,9 @@
-/* Tests for when a take is over (blop/turn.js), on made-up level readings.
-   Run with:  node --test tests/turn.test.mjs */
 import test from "node:test";
 import assert from "node:assert";
 import { TURN, createTurn, shareDone, speechSpan } from "../blop/turn.js";
 
 const SPEECH = -25, ROOM = -60;
 
-/* speech over the given [from, to) seconds, the quiet of a room otherwise; stops at the first thing the take says */
 function drive(turn, talk, { until = 30, room = ROOM, onTick } = {}) {
   for (let t = 0; t < until; t += 1 / 60) {
     const on = talk.some(([a, b]) => t >= a && t < b);
@@ -17,7 +14,6 @@ function drive(turn, talk, { until = 30, room = ROOM, onTick } = {}) {
   return { done: false, t: until };
 }
 
-/* like drive, but also says whether the sound is voiced: speech is, noise is not */
 function driveVoiced(turn, { voiced = [], unvoiced = [], noise = [] }, { until = 30 } = {}) {
   const within = (list, t) => list.some(([a, b]) => t >= a && t < b);
   for (let t = 0; t < until; t += 1 / 60) {
@@ -29,13 +25,11 @@ function driveVoiced(turn, { voiced = [], unvoiced = [], noise = [] }, { until =
 }
 
 test("loud noise that is not a voice does not keep a take open", () => {
-  /* a mic's noise suppression pumping, a driver's gain coming back up: bursts after the line is said */
   const bursts = Array.from({ length: 20 }, (_, i) => [2.8 + i * 0.8, 3.0 + i * 0.8]);
   const said = { voiced: [[0.5, 2.5]], noise: bursts };
   const r = driveVoiced(createTurn({ expected: 2, listens: false }), said);
   assert.strictEqual(r.reason, "quiet");
   assert.ok(r.t < 2.5 + TURN.quietMax + 0.3, "ended at " + r.t);
-  /* the same sounds, with nothing saying which are voiced, go on for as long as the cap allows */
   const blind = drive(createTurn({ expected: 2, listens: false }), [[0.5, 2.5], ...bursts]);
   assert.ok(blind.t > 10, "ended at " + blind.t);
 });
@@ -53,7 +47,6 @@ test("loud sound that is never voiced is taken as speech after a moment (a mic t
 });
 
 test("a take that starts on digital silence, in a room that is not quiet, still ends", () => {
-  /* the analyser reads zeros until the mic's first audio arrives, then the room (-50 dB) and a voice 30 dB above it */
   const turn = createTurn({ expected: 2, listens: false });
   let ended = null;
   for (let t = 0; t < 12 && !ended; t += 1 / 60) {
@@ -83,11 +76,9 @@ test("a short click is not the start of speech", () => {
 });
 
 test("without the word model, the take ends after a pause that is shorter once the learner is near the end", () => {
-  /* the model voice takes 2 s; this learner spoke for 2.6 s (the median, 1.3 times as long) */
   const a = drive(createTurn({ expected: 2, listens: false }), [[0.5, 3.1]]);
   assert.strictEqual(a.reason, "quiet");
   assert.ok(a.t - 3.1 > TURN.quietMin - 0.1 && a.t - 3.1 < TURN.quietMax, "waited " + (a.t - 3.1));
-  /* early in that range, the same pause is not the end */
   const b = drive(createTurn({ expected: 6, listens: false }), [[0.5, 1.5]]);
   assert.ok(b.t - 1.5 > a.t - 3.1 + 0.2, "waited " + (b.t - 1.5) + " against " + (a.t - 3.1));
   assert.ok(b.t - 1.5 <= TURN.quietMax + 0.1);
@@ -148,7 +139,6 @@ test("an answer about an earlier stretch of the take is ignored once the learner
     until: 14,
     onTick: (t) => {
       if (turn.wantsPeek()) { const at = turn.peeking(); if (first === null) first = at; else second = at; }
-      /* the answer for the first pause arrives after the learner has started again */
       if (first !== null && t > 3.2 && t < 3.3) turn.heard(first, true);
     },
   });
@@ -173,7 +163,6 @@ test("when the word model drops out mid-take, the quiet and the length decide", 
 });
 
 test("a take that never stops is cut after several times the model voice's length", () => {
-  /* talk with the breaths of talk: a steady sound is a hum, not speech */
   const r = drive(createTurn({ expected: 2 }), Array.from({ length: 120 }, (_, i) => [0.5 + i * 0.5, 0.9 + i * 0.5]));
   assert.strictEqual(r.reason, "long");
   assert.ok(Math.abs(r.t - 0.5 - (TURN.longest * 2 + 4)) < 0.2, "" + r.t);

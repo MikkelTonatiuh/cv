@@ -1,10 +1,8 @@
-/* demos-model.js: chapter 3, the model, the loss and the training setup (3.12 to 3.17). */
 (function () {
   'use strict';
   const s = K.s;
   const setH = (F, need) => { if (F.H !== need) { F.H = need; F.svg.setAttribute('height', need); F.svg.setAttribute('viewBox', '0 0 ' + F.W + ' ' + need); } };
 
-  /* ======================= 3.12 wav2vec2 shapes ======================= */
   K.demo({
     id: 'wav2vec2', sec: '3.12', title: 'Wav2Vec2 shapes', page: 18, y: 0.709,
     hint: 'Change the clip length.',
@@ -21,7 +19,6 @@
         const W = F.W, narrow = W < 540;
         const m = { l: 10, r: 12, t: 24 };
         const Ls = lengths(Math.round(dur * 16000)), T = Ls[7], D = big ? 1024 : 768, layers = big ? 24 : 12;
-        /* A: lengths per layer, log scale */
         const labW = narrow ? 118 : 150;
         const bx = K.scale(1, 5, m.l + labW, W - m.r - 58);
         F.add(K.label(m.l, m.t - 8, 'Length after each convolution (log scale)', 'lbl-b'));
@@ -32,7 +29,6 @@
           F.add(s('rect', { x: bx(1), y, width: Math.max(2, bx(Math.log10(Math.max(10, L))) - bx(1)), height: 13, rx: 3, class: i === 0 ? 'f-muted' : i === 7 ? 'f-t1' : 'f-t1 soft' }));
           F.add(K.label(bx(Math.log10(Math.max(10, L))) + 6, y + 10, K.n(L), i === 7 ? 'lbl-b mono' : 'tick mono'));
         });
-        /* B: frame timing in the first 100 ms */
         const by = m.t + 8 + 8 * 21 + 30;
         const tw = narrow ? W - m.l - m.r : (W - m.l - m.r) * 0.55;
         const tx = K.scale(0, 100, m.l + 8, m.l + tw);
@@ -44,7 +40,6 @@
           F.add(K.label((tx(a) + tx(b)) / 2, yy + 12, 'h' + String.fromCharCode(8321 + k), 'tick', 'middle'));
         }
         for (const t of [0, 20, 40, 60, 80, 100]) F.add(K.label(tx(t), by + 80, t + ' ms', 'tick', 'middle'));
-        /* C: transformer and tensor */
         const cx0 = narrow ? m.l : m.l + tw + 34, cy0 = narrow ? by + 104 : by - 6;
         F.add(s('rect', { x: cx0, y: cy0, width: 150, height: 30, rx: 6, class: 'f-panel2 s-line' }));
         F.add(K.label(cx0 + 75, cy0 + 19, 'transformer ×' + layers, 'lbl', 'middle'));
@@ -57,7 +52,6 @@
         F.add(K.label(X0 + bw + dp + 6, Y0 + bh / 2, 'D = ' + D, 'lbl-b'));
         F.add(K.label(X0 + bw + dp + 6, Y0 - dp / 2 + 2, 'B = ' + B, 'lbl-b'));
         setH(F, Math.max(narrow ? Y0 + bh + 26 : 0, by + 90));
-        /* the seven convolutions together: a 400-sample window that moves 320 samples (20 ms) at a time */
         const TT = String.raw`\class{tt1}{${T}}`;
         api.eq.set([
           String.raw`\class{tt1}{T} = \left\lfloor \frac{L - 400}{320} \right\rfloor + 1 = \left\lfloor \frac{${K.tn(Ls[0])} - 400}{320} \right\rfloor + 1 = ${TT}`,
@@ -69,7 +63,6 @@
     },
   });
 
-  /* ======================= 3.13 attention ======================= */
   K.demo({
     id: 'attention', sec: '3.13', title: 'Attention fusion', page: 19, y: 0.564, also: [[20, 0.175]],
     hint: 'Drag a state, or make the vectors longer.',
@@ -98,7 +91,7 @@
         drag = +t.getAttribute('data-j');
         sel = drag;
         selSeg.set(sel);
-        try { F.svg.setPointerCapture(ev.pointerId); } catch (e) { /* ignore */ }
+        try { F.svg.setPointerCapture(ev.pointerId); } catch (e) {}
         draw();
       });
       F.svg.addEventListener('pointermove', (ev) => {
@@ -138,7 +131,6 @@
           g.append(K.label(x(p[0]), y(p[1]) + 4, String(j + 1), 'lbl-on on-dark', 'middle'));
           F.add(g);
         });
-        /* matrix */
         const mx0 = narrow ? m.l + 30 : m.l + side + 64, my0 = narrow ? m.t + side + 64 : m.t + 10;
         const cell = Math.floor(Math.min(narrow ? (W - mx0 - m.r) / 6 : (W - mx0 - m.r) / 6, 42));
         F.add(K.label(mx0 - 28, my0 - 18, 'Attention weights αᵢⱼ (rows sum to 1)', 'lbl-b'));
@@ -155,7 +147,6 @@
           }
         }
         F.add(s('rect', { x: mx0 - 1, y: my0 + i * cell - 1, width: cell * 6 + 2, height: cell + 2, rx: 4, class: 'f-none s-t1', 'stroke-width': 2.5 }));
-        /* row bars */
         const ry0 = my0 + 6 * cell + 34, rh = 60;
         F.add(K.label(mx0 - 28, ry0 - 10, 'Row ' + (i + 1) + ': how much step ' + (i + 1) + ' listens to each step', 'lbl-b'));
         al[i].forEach((v, j) => {
@@ -165,7 +156,6 @@
         });
         F.add(s('line', { x1: mx0, x2: mx0 + 6 * cell, y1: ry0 + rh, y2: ry0 + rh, class: 'axis' }));
         setH(F, Math.max(narrow ? 0 : m.t + side + 16, ry0 + rh + 24));
-        /* row i of the softmax, live, and the weighted average it produces */
         const I = i + 1, row = al[i].map((v) => K.f(v, 2).replace(/^0/, '')).join(',\\ ');
         api.eq.set([
           String.raw`\class{tt1}{\alpha_{${I}j}} = \frac{\exp(\class{tt2}{h_${I} \cdot h_j})}{\sum_k \exp(\class{tt2}{h_${I} \cdot h_k})} = \class{tt1}{(${row})}`,
@@ -177,7 +167,6 @@
     },
   });
 
-  /* ======================= 3.13 pooling ======================= */
   K.demo({
     id: 'pooling', sec: '3.13', title: 'Pooling to a prediction', page: 20, y: 0.52, also: [[21, 0.175]],
     hint: 'Raise the burst, then add the padded steps.',
@@ -205,7 +194,6 @@
         const hp = mean.concat(mx);
         const z = Wm.map((row, c) => row.reduce((a, w, k) => a + w * hp[k], bias[c]));
         const p = K.softmax(z);
-        /* grid */
         const m = { l: 12, t: 26 };
         const cw = narrow ? Math.min(58, (W - 80) / 4) : 54, chh = 24;
         const gx = m.l + 52, gy = m.t + 16;
@@ -230,7 +218,6 @@
             F.add(K.label(gx + d * cw + cw / 2, yy + 16, K.f(v, 2), 'cellt mono', 'middle'));
           });
         });
-        /* pooled vector, logits, probabilities */
         const px0 = narrow ? m.l : gx + 4 * cw + 50, py0 = narrow ? my + 2 * (chh + 4) + 40 : m.t + 16;
         const pw = narrow ? W - m.l - 12 : W - px0 - 12;
         F.add(K.label(px0, py0 - 10, 'h_pool = [mean ‖ max]  (8 numbers)', 'lbl-b'));
@@ -251,7 +238,6 @@
           F.add(K.label(px0 + 136 + Math.max(2, bw * p[c]), yy + 15, K.pct(p[c], 0), 'lbl-b'));
         });
         setH(F, Math.max(my + 2 * (chh + 4) + 12, zy + 3 * 34 + 8));
-        /* the pooled vector, then logits and probabilities in each class's colour */
         const v1 = (arr) => arr.map((q) => K.f(q, 1)).join(',\\ ');
         const TC = ['tcalm', 'texc', 'tauth'];
         const each = (arr, f) => arr.map((q, c) => String.raw`\class{${TC[c]}}{${f(q)}}`).join(',\\ ');
@@ -265,7 +251,6 @@
     },
   });
 
-  /* ======================= 3.14 LoRA ======================= */
   K.demo({
     id: 'lora', sec: '3.14', title: 'LoRA', page: 21, y: 0.392,
     hint: 'Set r to 1, then tick the start of training.',
@@ -282,7 +267,6 @@
         const W = F.W, narrow = W < 560;
         const r = RS[ri], [d, k] = PRE[pre];
         const m = { l: 14, t: 24 };
-        /* diagram: x feeds the frozen W and the thin A then B path; the two results are added */
         const dw = narrow ? Math.min(W - 28, 330) : 290, dh = 270;
         const ox = m.l, oy = m.t + 16;
         const cx = ox + dw * 0.5, cxW = ox + dw * 0.26, cxL = ox + dw * 0.74;
@@ -308,7 +292,6 @@
         F.add(K.label(cx, sumY + 5, '+', 'lbl-b', 'middle'));
         F.add(s('rect', { x: cxW - 24, y: inY, width: cxL - cxW + 48, height: 14, rx: 3, class: 'f-ink2' }));
         F.add(K.label(cx, inY + 30, 'input x  (k = ' + k + ')', 'tick', 'middle'));
-        /* update heatmap */
         const hx = narrow ? m.l : ox + dw + 36, hy = narrow ? oy + dh + 60 : m.t + 4;
         const hs = narrow ? Math.min(W - 28, 240) : Math.min(W - hx - 14, 230);
         const n = 48, rr = Math.min(r, n);
@@ -333,7 +316,6 @@
         F.add(s('image', { href: url, x: hx, y: hy, width: hs, height: hs, preserveAspectRatio: 'none', class: 'pix' }));
         F.add(s('rect', { x: hx, y: hy, width: hs, height: hs, class: 'f-none s-line' }));
         F.add(K.label(hx, hy + hs + 16, 'a 48 × 48 corner, blue = positive, red = negative', 'tick'));
-        /* parameter bars */
         const py = narrow ? hy + hs + 50 : oy + dh + 40;
         const full = d * k, lo = r * (d + k);
         const bx = m.l + 92, bw = W - bx - 110;
@@ -357,7 +339,6 @@
     },
   });
 
-  /* ======================= 3.15 KL loss ======================= */
   K.demo({
     id: 'kl', sec: '3.15', title: 'KL divergence loss', page: 22, y: 0.17, also: [[31, 0.573]],
     hint: 'Move the logits until the bars fill their outlines.',
@@ -391,7 +372,6 @@
           F.add(K.label(cx, yy(0) + 31, (y[c] > 0 ? (contrib >= 0 ? '+' : '') + K.f(contrib, 3) : '0'), 'tick mono', 'middle'));
         });
         F.add(K.label(m.l - 6, yy(0) + 31, 'y·log(y/ŷ)', 'tick', 'end'));
-        /* KL curve along one logit */
         const cx0 = narrow ? m.l : m.l + pw + 50, cy0 = narrow ? m.t + ph + 84 : m.t;
         const cw = narrow ? W - m.l - m.r : W - m.r - cx0, ch = narrow ? 150 : ph;
         const pts = [];
@@ -403,7 +383,6 @@
         F.add(s('path', { d: K.path(pts.map(([a, b]) => [xc(a), yc(Math.min(b, Math.ceil(top * 2) / 2))])), class: 'ln s-t2', 'stroke-width': 2 }));
         F.add(s('circle', { cx: xc(z[sweep]), cy: yc(Math.min(KL, Math.ceil(top * 2) / 2)), r: 5, class: 'f-t2 ring' }));
         setH(F, narrow ? cy0 + ch + 26 : Math.max(F.H, m.t + ph + 40));
-        /* one term per class in the target, in that class's colour; the total is the dot on the curve */
         const TC = ['tcalm', 'texc', 'tauth'];
         const terms = y.map((v, c) => (v > 0 ? String.raw`\class{${TC[c]}}{${K.f(v, 2)} \log \tfrac{${K.f(v, 2)}}{${K.f(q[c], 2)}}}` : null)).filter(Boolean);
         api.eq.set([
@@ -416,7 +395,6 @@
     },
   });
 
-  /* ======================= 3.16 training schedule ======================= */
   K.demo({
     id: 'schedule', sec: '3.16', title: 'Warmup, cosine decay, early stopping', page: 23, y: 0.17, also: [[23, 0.611]],
     hint: 'Set warmup to 0%, or raise the minimum improvement.',
@@ -443,7 +421,6 @@
         for (let i = 0; i <= 300; i++) { const u = i / 300; pts.push([x(5 * u), y(lr(u))]); }
         F.add(s('path', { d: K.path(pts), class: 'ln s-t1', 'stroke-width': 2 }));
         if (wu > 0.04) F.add(K.label(x(2.5 * wu), m.t + 14, 'warmup', 'tick', 'middle'));
-        /* early stopping on validation UAR */
         let best = UAR[0], cnt = 0, stop = 5;
         for (let e = 1; e < 5; e++) {
           if (UAR[e] - best > delta) cnt = 0; else cnt++;
@@ -464,7 +441,6 @@
         F.add(s('line', { x1: xe(stop), x2: xe(stop), y1: cy0, y2: cy0 + ph, class: 's-t2 dash', 'stroke-width': 1.5 }));
         F.add(K.label(xe(stop) - 6, cy0 + 14, 'stop', 'lbl-b', 'end'));
         setH(F, cy0 + ph + 26);
-        /* the schedule with the current warmup, and each epoch's gain against δ (gains that don't count are greyed) */
         const UW = String.raw`\class{tt1}{${K.f(wu, 2)}}`;
         const cos = String.raw`\eta_{\max} \cdot \tfrac12 \left[ 1 + \cos\!\left( \pi\, \frac{u - ${UW}}{1 - ${UW}} \right) \right]`;
         const gains = UAR.slice(1).map((v, i) => { const g = v - Math.max(...UAR.slice(0, i + 1)); return g > delta ? K.f(g, 3) : String.raw`\class{tmut}{${K.f(g, 3)}}`; });
@@ -479,7 +455,6 @@
     source: 'Validation values from Figure 4.3; UAR is read off the plot, so approximate.',
   });
 
-  /* ======================= 3.17 confidence and feedback ======================= */
   K.demo({
     id: 'confidence', sec: '3.17', title: 'From probabilities to feedback', page: 24, y: 0.235, also: [[40, 0.429]],
     hint: 'Drag the point to the centre, then raise T.',
@@ -503,7 +478,7 @@
         p = [l1 / sm, l2 / sm, l3 / sm];
         draw();
       };
-      F.svg.addEventListener('pointerdown', (ev) => { drag = true; try { F.svg.setPointerCapture(ev.pointerId); } catch (e) { /* ignore */ } setFrom(ev); });
+      F.svg.addEventListener('pointerdown', (ev) => { drag = true; try { F.svg.setPointerCapture(ev.pointerId); } catch (e) {} setFrom(ev); });
       F.svg.addEventListener('pointermove', (ev) => { if (drag) setFrom(ev); });
       F.svg.addEventListener('pointerup', () => { drag = false; });
       F.svg.addEventListener('pointercancel', () => { drag = false; });

@@ -1,16 +1,9 @@
-/* Runs the analysis on this device and hands Blop the board's payload: which words were clear
-   (blop/clarity.js), and how the melody, timing and pauses compare with the line's example
-   (voice/engine.js). If the word check can't run, the board shows the comparison alone. */
 import { PRAISE, clarityNote, clarityTips, summarize } from "./clarity.js";
 
-/* seconds of pitched voice a take needs before it is scored. Short lines like "It's eleven o'clock"
-   have only about half a second of it */
 export const MIN_VOICED = 0.4;
 
-/* the word model listens at 16 kHz */
 export const WORD_RATE = 16000;
 
-/* Blop says these when a take can't be scored */
 export const UNHEARD = {
   silent: "i didn't hear anything. is the right mic on?",
   little: "i only caught a bit of that. say the whole line.",
@@ -43,11 +36,8 @@ export async function loadExample(line, VE) {
   return { url, analysis: VE.analyze(pcm, sr, { minVoiced: MIN_VOICED }), pcm, sr };
 }
 
-/* The comparison's loudness and pitch-range bars are left off the board: they move with the room, the
-   microphone and the voice more than with how clear the speech is. */
 const BAR_NAMES = { shape: "melody", timing: "timing", pauses: "pauses" };
 
-/* the take at the word model's rate; a quiet take is raised so it isn't lost in the noise floor */
 export function wordAudio(VE, pcm, sr) {
   const out = VE.resample(pcm, sr, WORD_RATE);
   let peak = 0;
@@ -56,7 +46,6 @@ export function wordAudio(VE, pcm, sr) {
   return out;
 }
 
-/* clarity is { words } from the word check, or null when it couldn't run; example is the line's analysed recording */
 export function toPayload(VE, take, example, clarity) {
   if (!take || !take.ok) return { unheard: true, copy: UNHEARD[take && take.reason] || UNHEARD.none };
   const cmp = example && example.ok ? VE.compare(example, take) : null;
@@ -88,13 +77,11 @@ export function toPayload(VE, take, example, clarity) {
       pausing: take.pauseShare,
       endings: take.endings,
     },
-    /* clarity first, then one bar per part of the comparison; pauses only when either side paused */
     bars,
     overlay: cmp ? cmp.overlay : null,
   };
 }
 
-/* semitones the drawing spans above and below the middle: enough for 95% of the melody's points */
 export function melodyRange(...lists) {
   const v = [];
   for (const pts of lists) for (const p of pts || []) v.push(Math.abs(p[1]));
@@ -102,9 +89,6 @@ export function melodyRange(...lists) {
   return Math.max(6, v.length ? v[Math.floor(0.95 * (v.length - 1))] : 0);
 }
 
-/* a melody over normalised time: [t 0..1, semitones around the speaker's usual pitch], drawn as the tune
-   rather than the tracker: short gaps (consonants) are bridged and only pauses break the line, a median
-   filter drops tracker slips, and stretches under 40 ms are left out */
 export function strokeMelody(ctx, pts, w, h, color, width, dash, range = 8) {
   const segs = [[]];
   for (let k = 0; k < pts.length; k += 1) {

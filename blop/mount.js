@@ -20,10 +20,6 @@ function compile(gl, type, src) {
   return s;
 }
 
-/* Ported 1:1 from src/components/Blop/Blop.jsx — same springs, uniforms and loop.
-   `read()` returns the live props: {mood, voice, tone, recording, band, live,
-   baseLine, allowAsides, ride, cap, page}. While recording, `live` is the band to show
-   (blop/grade.js, liveBand); after it, `band` is. */
 export function mountBlop(canvas, read) {
   const gl = canvas.getContext("webgl", { antialias: false, alpha: true, premultipliedAlpha: true });
   if (!gl) return { stop() {}, kick() {} };
@@ -56,7 +52,7 @@ export function mountBlop(canvas, read) {
   let last = performance.now(), t0 = last, raf = 0, running = true;
   let lastCap = "", aside = emptyAside(), charge = { charge: 0, band: "rest" };
   let bandState = emptyBand(), voiceEnv = 0, mix = emptyMix();
-  let lastMood = "", moodT = 0;   /* when the current mood began: a pose can play a beginning, then settle */
+  let lastMood = "", moodT = 0;
   let leaveAge = 0, eagerT = -99, wasClose = false, kicks = 0;
   const ptr = { x: 0, y: 0, clientX: null, clientY: null, inside: true };
 

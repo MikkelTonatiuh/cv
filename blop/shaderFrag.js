@@ -26,18 +26,11 @@ float capsule(vec2 p, vec2 a, vec2 b, float r){
   return length(pa-ba*hh)-r;
 }
 
-// Every eye parameter now takes a per-side offset. Symmetry is only wanted
-// when the point is stiffness; the rest of the time a mirrored face reads as
-// dead. On an angry or surprised face one side stretches while the other
-// squishes, and that tension is the expression.
 float eyeField(vec2 q){
   float d = 1e9;
   for(int i=0;i<2;i++){
     float side = (i==0) ? -1.0 : 1.0;
 
-    // ONE-SIDED. The sign picks which eye is affected; the other keeps its
-    // baseline exactly. A raised brow is one eye unchanged and the other
-    // shorter, not both moving in opposite directions.
     float mine  = (uAsymOpen*side > 0.0) ? abs(uAsymOpen) : 0.0;
     float bmine = (uAsymBrow*side > 0.0) ? uAsymBrow : 0.0;
     float smine = (uAsymSize*side > 0.0) ? abs(uAsymSize) : 0.0;
@@ -54,9 +47,6 @@ float eyeField(vec2 q){
     float dCap = capsule(pp, -dir*EL*sz, dir*EL*sz, ER*sz)*k;
 
     vec2 bn = vec2(side*sin(brow*1.15), cos(brow*1.15));
-    // The lid must scale with how far the eye is open. It never mattered
-    // while k was capped at 1; now that an eye can open WIDER than normal,
-    // an unscaled lid clips it back into a square.
     float lid = (EL+ER)*sz*k*(1.0 - abs(brow)*0.72);
     dCap = max(dCap, dot(p, bn) - lid);
 
@@ -130,7 +120,7 @@ vec3 shade(vec2 uv, out float alpha){
   vec2 q2 = pr.xy - vec2(uLook.x*0.175, uLook.y*0.125) - uDrag;
   float ef = eyeField(q2);
   float m = 1.0-smoothstep(0.0, 0.006, ef);
-  m *= smoothstep(0.0, 0.25, pr.z);   // the rotated face, so a spin hides it round the back
+  m *= smoothstep(0.0, 0.25, pr.z);
   col = mix(col, vec3(0.022) + spec*0.12, m);
 
   return col;
@@ -154,9 +144,7 @@ void main(){
   vec2 sp = (base - vec2(0.0, -0.82))/vec2((0.60+uHop*0.35)/sqrt(max(sy,0.35)), 0.085+uHop*0.05);
   float sh = exp(-dot(sp,sp)*1.6)*0.45*clamp(1.0-uHop*1.1, 0.12, 1.0);
 
-  /* Composite over transparency instead of over uPage, so the canvas is not an
-     opaque rectangle sitting on top of whatever the page draws behind it.
-     Premultiplied: shadow layer first, body over it. */
+  
   vec3 shadeCol = vec3(0.02,0.022,0.028);
   float shA = sh*0.9;
   float a = alpha + shA*(1.0-alpha);

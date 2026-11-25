@@ -1,8 +1,3 @@
-/* Tests that the name on the CV is written by gradient descent on a landscape with the letters cut into it.
-   Each fixture in tests/fixtures is the name as the page measured it at one window width: the rasterised
-   letters, and where they sit. The tests rebuild the page's surface from that (the contour terrain, then the
-   valleys), run the descents, and check what they drew.
-   Run with:  node --test tests/name-writing.test.mjs */
 import test from "node:test";
 import assert from "node:assert";
 import fs from "node:fs";
@@ -20,7 +15,6 @@ function layout(width) {
   const { docW, docH, nameX, nameY, avail } = fx;
   const field = buildField({ docW, docH, raster, nameX, nameY, cell: 4 });
   const track = nameTrack(raster, nameX, nameY);
-  /* where the page starts its approach run (scene.js does the same) */
   const bandTop = 8, bandBottom = nameY + raster.cssH * 0.72;
   let startX = Math.min(docW - 18, nameX + avail - 6), startY = floorAt(field, startX, bandTop, bandBottom);
   for (let k = 0; k < 26; k++) {
@@ -77,7 +71,6 @@ for (const width of WIDTHS) {
   });
 
   test(`${width}px: the valleys are what writes the name: take their gradient away and the letters are gone`, () => {
-    /* share of all the floors that a set of descents has traced (a floor point counts if a path passes within 0.3 px) */
     const traced = (runs) => {
       let hit = 0, all = 0;
       for (const r of runs.filter((o) => o.kind === "stroke")) {
@@ -122,10 +115,6 @@ for (const width of WIDTHS) {
   });
 }
 
-/* A regression found on the page. The terrain can push the pen a hair to the outside of a bend, where the nearest
-   point of the floor is a vertex and neither of its segments is under the pen. If the slope switched off there, the
-   pen came to rest on the corner (it happened to one stroke in thirty). On a floor that bends, about one push
-   direction in ten used to trap it. */
 test("a descent is not stopped by terrain pushing it to the outside of a bend", () => {
   for (const radius of [1.2, 2.2, 5]) {
     const floor = [];
@@ -142,7 +131,6 @@ test("a descent is not stopped by terrain pushing it to the outside of a bend", 
   }
 });
 
-/* the unit the page's surface is made of: a straight valley, and a descent that has only the surface to follow */
 test("a descent started at the top of a valley rolls down it and stops in the pit at the end", () => {
   const floor = [];
   for (let x = 10; x <= 30.001; x += 0.5) floor.push([x, 20 + 0.4 * Math.sin(x / 3)]);
@@ -153,7 +141,6 @@ test("a descent started at the top of a valley rolls down it and stops in the pi
     assert.ok(run.finished, `momentum ${momentum}: stopped short`);
     assert.ok(dist(run.end, floor[floor.length - 1]) < 0.05, `momentum ${momentum}: ended ${dist(run.end, floor[floor.length - 1]).toFixed(3)} px from the pit`);
     assert.ok(run.steps > 200, `momentum ${momentum}: took ${run.steps} steps; a descent takes many small steps, not a few big ones`);
-    /* the surface is far lower at the end than at the start, and the pen never backs up the valley */
     assert.ok(valleys.at(run.end[0], run.end[1]).value < valleys.at(run.start[0], run.start[1]).value - 0.9 * valleys.params.slope * 20);
     let along = -Infinity;
     for (const p of run.path) {

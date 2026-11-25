@@ -186,9 +186,7 @@ export function applyFlourish(pose, fl) {
 export function skepticalFace(strength = 1) {
   return {
     asymOpen: 0.46 * strength,
-    // right eye shortens; left untouched
     asymBrow: 0.4 * strength,
-    // and its lid tilts in
     asymY: 0.012 * strength,
     tilt: 0.07 * strength
   };
@@ -259,8 +257,6 @@ var EAGER_KNOTS = [
   { p: 0.72, hop: 0.16, sy: 1.08 },
   { p: 1, hop: 0.02, sy: 1 }
 ];
-/* A result that went well: one hop when it arrives (a crouch, the jump, a landing, a settle: nothing taller than the
-   frame has room for), then a content rest with a small bounce now and then. */
 var CELEBRATE_KNOTS = [
   { p: 0, hop: 0, sy: 1, lookY: 0.04 },
   { p: 0.16, hop: 0.01, sy: 0.86, lookY: 0.2 },

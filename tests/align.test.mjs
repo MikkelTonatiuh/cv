@@ -1,13 +1,9 @@
-/* Tests for lining a take up with the example recording (blop/align.js), on made-up sounds.
-   Run with:  node --test tests/align.test.mjs */
 import test from "node:test";
 import assert from "node:assert";
 import { carry, exampleSpans, features, takeSpans, warp } from "../blop/align.js";
 
 const SR = 16000;
 
-/* a stand-in for speech: each "word" is a steady mix of tones with its own spectrum, so each sounds different to the
-   features; a little noise lies under everything, and the silences before and after are not quite silent */
 function say(words, lead, tail) {
   const n = Math.round((lead + words.reduce((s, w) => s + w[1], 0) + tail) * SR);
   const x = new Float32Array(n);
@@ -44,16 +40,14 @@ test("a recording becomes a frame every 10 ms, each coefficient centred and scal
   assert.strictEqual(features(new Float32Array(100), 0, 1).frames.length, 0);
 });
 
-/* frames with one distinct direction per "word" */
 const seq = (lengths) => lengths.flatMap((n, w) => Array.from({ length: n }, () => Float32Array.from({ length: 12 }, (_, c) => (c === w ? 3 : 0))));
 
 test("the example is stretched onto a take that is slower in places, and its word edges land where the take's are", () => {
-  const ex = seq([20, 30, 25, 25]);            /* 100 frames: edges at 20, 50, 75 */
-  const take = seq([30, 20, 40, 30]);          /* 120 frames: edges at 30, 50, 90 */
+  const ex = seq([20, 30, 25, 25]);
+  const take = seq([30, 20, 40, 30]);
   const p = warp(ex, take);
   assert.strictEqual(p.length, 100);
   for (let i = 1; i < p.length; i += 1) assert.ok(p[i] >= p[i - 1] - 1e-9, "never goes back");
-  /* where inside a word the extra frames go is not fixed, so the ends meet only to within the first and last words */
   assert.ok(p[0] < 10 && p[99] > 109, "the ends meet: " + p[0] + " and " + p[99]);
   assert.ok(Math.abs(p[20] - 30) <= 4, "edge 1 at " + p[20]);
   assert.ok(Math.abs(p[50] - 50) <= 4, "edge 2 at " + p[50]);
@@ -85,7 +79,7 @@ test("with the example's speech edges given, the first word starts and the last 
 
 test("a take is trimmed the same way as the example: its first word starts and its last ends where its speech does", () => {
   const exX = say([[400, 0.3], [900, 0.4], [1500, 0.3], [2400, 0.4]], 0.5, 0.3);
-  const takeX = say([[400, 0.9], [900, 0.6], [1500, 1.1], [2400, 0.7]], 0.8, 0.5);   /* about twice as slow */
+  const takeX = say([[400, 0.9], [900, 0.6], [1500, 1.1], [2400, 0.7]], 0.8, 0.5);
   const words = ["a", "b", "c", "d"];
   const exAnchors = [[0.52, 0.78], [0.84, 1.17], [1.22, 1.48], [1.54, 1.88]];
   const out = takeSpans(words, { anchors: exAnchors, pcm: exX, run: { from: 0.5, to: 1.9 } }, { pcm: takeX, analysis: analysisOf(0.8, 4.1) });
@@ -100,7 +94,6 @@ test("carrying spans across: the words of the example land on the words of the t
   const words = ["a", "b", "c", "d"];
   const exAnchors = [[0.52, 0.78], [0.84, 1.17], [1.22, 1.48], [1.54, 1.88]];
   const out = takeSpans(words, { anchors: exAnchors, pcm: exX }, { pcm: takeX, analysis: analysisOf(0.7, 2.4) });
-  /* the take's words: 0.7-1.15, 1.15-1.45, 1.45-2.05, 2.05-2.4 */
   assert.deepStrictEqual(out.map((s) => s.w), words);
   const truth = [1.15, 1.45, 2.05];
   [0, 1, 2].forEach((i) => assert.ok(Math.abs(out[i].to - truth[i]) < 0.08, "word " + i + " ends at " + out[i].to + ", not " + truth[i]));

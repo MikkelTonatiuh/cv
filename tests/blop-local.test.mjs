@@ -1,5 +1,3 @@
-/* Tests that blop/local.js hands Blop a payload its existing code (blop/map.js) understands.
-   Run with:  node --test tests/engine.test.js tests/blop-local.test.mjs tests/clarity.test.mjs */
 import test from "node:test";
 import assert from "node:assert";
 import fs from "node:fs";

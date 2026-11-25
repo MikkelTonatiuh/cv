@@ -1,4 +1,3 @@
-/* app.js: demo registry, thesis reader, scroll sync and navigation. */
 (function () {
   'use strict';
   const h = K.h;
@@ -8,8 +7,8 @@
   K.go = function (id) { activate(id, { scroll: true }); };
 
   const FIRST_PAGE = 1, LAST_PAGE = 50;
-  const PAGE_PT = 595;                      /* A4 page width in PDF points */
-  const READ = 0.3;                         /* reading line: 30% down the thesis pane */
+  const PAGE_PT = 595;
+  const READ = 0.3;
   const GROUPS = [
     ['Start', (d) => !d.sec],
     ['3 Methods', (d) => d.sec && d.sec[0] === '3'],
@@ -55,7 +54,6 @@
     pane.addEventListener('scroll', () => { notePlace(); if (!raf) raf = setTimeout(syncFromScroll, 60); }, { passive: true });
     pane.addEventListener('scrollend', () => { quietUntil = 0; });
 
-    /* runs right after layout, before the frame is painted, so the page never visibly jumps */
     const ro = new ResizeObserver(() => { keepPlace(fitPages); resizeFns.forEach((f) => safe(f)); });
     ro.observe(stage);
     ro.observe(pane);
@@ -75,7 +73,6 @@
     loadPdf();
   }
 
-  /* ---------- page size: fits the pane, times the zoom; the two sides share the width ---------- */
   let zoom = 1, zoomLabel = null;
   function fitPages() {
     if (solo) pane.style.removeProperty('--page-w');
@@ -88,8 +85,6 @@
     if (el && el.clientWidth) pane.style.setProperty('--scale-factor', (el.clientWidth / PAGE_PT).toFixed(5));
     schedulePdf();
   }
-  /* where the reading line sits (page and fraction of it), noted after every scroll. A window resize has
-     already moved things by the time it is reported, so the place is taken from before it */
   let place = null;
   function notePlace() {
     if (solo || !pane.clientHeight) return;
@@ -97,7 +92,6 @@
     const p = pageAt(line), el = pageEls[p];
     place = { p, frac: (line - el.offsetTop) / el.offsetHeight };
   }
-  /* change the page size without losing the line being read */
   function keepPlace(fn) {
     if (solo || !pane.clientHeight) { fn(); computeAnchors(); return; }
     if (!place) notePlace();
@@ -113,37 +107,36 @@
     zoom = K.clamp(z, 0.5, 3);
     keepPlace(fitPages);
     zoomLabel.textContent = Math.round(zoom * 100) + '%';
-    try { localStorage.setItem('thesis-zoom', String(zoom)); } catch (e) { /* storage blocked */ }
+    try { localStorage.setItem('thesis-zoom', String(zoom)); } catch (e) {}
   }
   function wireZoom() {
     zoomLabel = document.getElementById('zoom-fit');
-    try { zoom = K.clamp(parseFloat(localStorage.getItem('thesis-zoom')) || 1, 0.5, 3); } catch (e) { /* storage blocked */ }
+    try { zoom = K.clamp(parseFloat(localStorage.getItem('thesis-zoom')) || 1, 0.5, 3); } catch (e) {}
     zoomLabel.textContent = Math.round(zoom * 100) + '%';
     document.getElementById('zoom-in').addEventListener('click', () => setZoom(zoom * 1.2));
     document.getElementById('zoom-out').addEventListener('click', () => setZoom(zoom / 1.2));
     zoomLabel.addEventListener('click', () => setZoom(1));
-    /* pinch on a trackpad, or Ctrl + scroll, zooms the thesis */
     pane.addEventListener('wheel', (e) => { if (!e.ctrlKey) return; e.preventDefault(); setZoom(zoom * Math.exp(-e.deltaY * 0.002)); }, { passive: false });
   }
   function wireSplitter() {
     const split = document.querySelector('.split'), bar = document.getElementById('splitter');
     const MIN_L = 340, MIN_R = 300;
     let f = 0.5;
-    try { f = parseFloat(localStorage.getItem('thesis-split')) || 0.5; } catch (e) { /* storage blocked */ }
+    try { f = parseFloat(localStorage.getItem('thesis-split')) || 0.5; } catch (e) {}
     const apply = (v, save) => {
       const W = split.clientWidth - 10;
       if (W <= 0) return;
       f = K.clamp(v, Math.min(0.5, MIN_L / W), Math.max(0.5, 1 - MIN_R / W));
       keepPlace(() => { split.style.setProperty('--split', f.toFixed(4)); fitPages(); });
       bar.setAttribute('aria-valuenow', String(Math.round(f * 100)));
-      if (save) { try { localStorage.setItem('thesis-split', String(f)); } catch (e) { /* storage blocked */ } }
+      if (save) { try { localStorage.setItem('thesis-split', String(f)); } catch (e) {} }
     };
     bar.setAttribute('aria-valuemin', '0');
     bar.setAttribute('aria-valuemax', '100');
     apply(f, false);
     bar.addEventListener('pointerdown', (ev) => {
       ev.preventDefault();
-      try { bar.setPointerCapture(ev.pointerId); } catch (e) { /* keep dragging without capture */ }
+      try { bar.setPointerCapture(ev.pointerId); } catch (e) {}
       document.documentElement.classList.add('resizing');
       const r = split.getBoundingClientRect();
       const move = (e) => apply((e.clientX - r.left - 5) / (r.width - 10), false);
@@ -166,15 +159,13 @@
     });
   }
 
-  /* ---------- the thesis itself: the PDF drawn by PDF.js over each page's picture ---------- */
   const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/';
   let pdfLib = null, pdfDoc = null, pdfTimer = 0;
-  const pdfState = {};       /* page number -> { w, canvas, busy, again, text } */
-  const near = new Set();    /* pages in view or close to it; only these keep a canvas */
+  const pdfState = {};
+  const near = new Set();
   async function loadPdf() {
     try {
       pdfLib = await import(PDFJS + 'pdf.min.mjs');
-      /* workers must come from this site, so a tiny local module imports the one on the CDN */
       const boot = URL.createObjectURL(new Blob(['import "' + PDFJS + 'pdf.worker.min.mjs";'], { type: 'text/javascript' }));
       pdfLib.GlobalWorkerOptions.workerPort = new Worker(boot, { type: 'module' });
       pdfDoc = await pdfLib.getDocument({ url: '../cv/thesis.pdf' }).promise;
@@ -207,7 +198,6 @@
       const page = await pdfDoc.getPage(p);
       const base = page.getViewport({ scale: 1 });
       const vp = page.getViewport({ scale: w / base.width });
-      /* sharp on high-density screens, but never more than 16 megapixels per page */
       const dpr = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(16e6 / (vp.width * vp.height)));
       const cv = h('canvas', { class: 'pdf', 'aria-hidden': 'true' });
       cv.width = Math.round(vp.width * dpr);
@@ -218,7 +208,6 @@
       st.canvas = cv;
       st.w = w;
       if (!st.text) {
-        /* selectable text and links; both are laid out in page units, so they follow any later resize */
         st.text = true;
         const tl = h('div', { class: 'textLayer' });
         el.insertBefore(tl, el.querySelector('.pno'));
@@ -256,7 +245,6 @@
     }
     if (box.childNodes.length) el.insertBefore(box, el.querySelector('.pno'));
   }
-  /* a link inside the thesis (contents, figure and section references) scrolls to its target, and the figure follows */
   async function goToDest(dest) {
     try {
       const d = typeof dest === 'string' ? await pdfDoc.getDestination(dest) : dest;
@@ -333,7 +321,7 @@
     pageInd.textContent = 'p. ' + pageAt(line);
     if (held || Date.now() < quietUntil || !anchors.length) return;
     let best = anchors[0];
-    for (const a of anchors) { if (a.abs <= line + 4) best = a; else break; }   /* a few px of slack for rounding after a resize or zoom */
+    for (const a of anchors) { if (a.abs <= line + 4) best = a; else break; }
     if (active && best.id !== active.id) activate(best.id, { scroll: false });
   }
 
@@ -390,7 +378,7 @@
     renderStage(d);
     sel.value = d.id;
     updateMarks();
-    try { history.replaceState(null, '', '#' + d.id); } catch (e) { /* sandboxed */ }
+    try { history.replaceState(null, '', '#' + d.id); } catch (e) {}
     if (opts.scroll) scrollToDemo(d, opts.instant);
     else if (!solo) pageInd.textContent = 'p. ' + pageAt(pane.scrollTop + pane.clientHeight * READ);
   }
@@ -416,7 +404,6 @@
         h('p', { class: 'eyebrow' }, d.sec ? h('span', { class: 'sec' }, d.sec) : null, d.title),
         h('div', { class: 'stage-nav' }, prev, next))
     );
-    /* the formula sits on top of the figure and follows it: panels set it again with live numbers */
     const eqHost = h('div', { class: 'eq-host' });
     const fig = h('div', { class: 'fig-host' });
     const ctl = h('div', { class: 'controls' });
@@ -433,11 +420,9 @@
     };
     try { cleanup = d.build ? d.build(api) || null : null; }
     catch (e) { console.error(e); fig.append(h('p', { class: 'err' }, 'This demo failed to load (' + e.message + ').')); }
-    /* panels without live numbers show their formula as written */
     if (!eq.touched && d.math) eq.set(d.math.flatMap((t) => t.split('\\qquad')).map((p) => p.trim().replace(/,\s*$/, '')).filter(Boolean));
   }
 
-  /* point at a coloured symbol in the formula, or at its part of the figure, and both light up */
   const FOCUS = [['t1', 'tt1'], ['t2', 'tt2'], ['t3', 'tt3'], ['calm', 'tcalm'], ['excited', 'texc'], ['auth', 'tauth']];
   function focusFrom(target) {
     for (let el = target; el && el !== stage; el = el.parentNode) {
@@ -458,7 +443,6 @@
     stage.addEventListener('pointerleave', () => { delete stage.dataset.focus; });
   }
 
-  /* chip that jumps to another demo, for use inside panels */
   K.chip = function (id, text) {
     const b = h('button', { type: 'button', class: 'chip' }, text);
     b.addEventListener('click', () => activate(id, { scroll: true }));
