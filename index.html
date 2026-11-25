@@ -236,9 +236,9 @@
        site's live dot and an open mark. No words needed. */
     .print-name { display: block; margin: 0 0 8px; }
     .print-name > a { display: inline-flex; align-items: center; gap: 12px; padding: 7px 8px 7px 16px; border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--ink) 3%, transparent); font: 500 32px/1.15 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; letter-spacing: -0.02em; color: var(--ink-hi); text-decoration: none; }
-    .print-live { width: 8px; height: 8px; margin-left: 4px; border-radius: 50%; background: var(--warm); box-shadow: 0 0 0 4px color-mix(in srgb, var(--warm) 22%, transparent); }
-    .print-go { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9px; background: var(--warm-text); color: #fff; }
-    .print-go svg { width: 16px; height: 16px; }
+    .print-go { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px 6px 12px; border-radius: 9px; background: var(--warm-text); color: #fff; font: 700 11px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; }
+    .print-live { width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3); }
+    .print-go svg { width: 13px; height: 13px; }
     .pf-col { margin-top: -86px !important; margin-right: 0 !important; width: 184px !important; gap: 6px !important; }
     .pf { width: 108px !important; height: 108px !important; }
     .sub { margin-bottom: 12px !important; }
@@ -284,7 +284,7 @@
       <span ref="{{ mathRef }}" aria-hidden="true" style="position: absolute; display: block; max-width: 100%; width: 330px; height: 96px; opacity: 0; pointer-events: none; z-index: 2"></span>
     </h1>
 
-    <p class="print-name"><a href="https://mikkeltonatiuh.github.io/voicemaster-rendering/">Mikkel T. Chávez Petersen<span class="print-live" aria-hidden="true"></span><span class="print-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 16 16 8M9.5 8H16v6.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a></p>
+    <p class="print-name"><a href="https://mikkeltonatiuh.github.io/voicemaster-rendering/">Mikkel T. Chávez Petersen<span class="print-go"><span class="print-live" aria-hidden="true"></span>{{ liveLabel }}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 16 16 8M9.5 8H16v6.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a></p>
     <p class="sub" data-mutter="meta">{{ meta }}</p>
     <div class="pf-col">
       <span class="pf" ref="{{ portraitRef }}"></span>
@@ -435,6 +435,7 @@ class Component extends DCLogic {
       gemmaBy: "Hosted by",
       gemmaBoardLink: "Rank {n}",
       degreeCap: "Data Science graduate",
+      liveLabel: "Live CV",
       thesisExplained: "Interactive explainer",
       gemmaBoardNone: "Leaderboard",
       gemmaBoardOf: "Rank {n} of {t}",
@@ -490,6 +491,7 @@ class Component extends DCLogic {
       gemmaBy: "Organiza",
       gemmaBoardLink: "Puesto {n}",
       degreeCap: "Graduado en Data Science",
+      liveLabel: "CV en vivo",
       thesisExplained: "Explicación interactiva",
       gemmaBoardNone: "Clasificación",
       gemmaBoardOf: "Puesto {n} de {t}",
@@ -545,6 +547,7 @@ class Component extends DCLogic {
       gemmaBy: "Arrangør",
       gemmaBoardLink: "Nr. {n}",
       degreeCap: "Uddannet i Data Science",
+      liveLabel: "Live-CV",
       thesisExplained: "Interaktiv gennemgang",
       gemmaBoardNone: "Rangliste",
       gemmaBoardOf: "Nr. {n} af {t}",
@@ -992,6 +995,7 @@ class Component extends DCLogic {
       rsnaPage: copy.rsnaPage,
       paperLink: copy.paperLink,
       degreeCap: copy.degreeCap,
+      liveLabel: copy.liveLabel,
       auLogo: this.state.lang === "da" ? "da" : "en",
       whenGemma: copy.whenGemma,
       whenRsna: copy.whenRsna,
