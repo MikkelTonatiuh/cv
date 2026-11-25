@@ -97,8 +97,15 @@
   .act svg { width: 15px; height: 15px; flex: none; color: var(--warm-text); }
   .act .arr { color: var(--ink-2); font-size: 11px; font-weight: 500; }
   .act:hover { border-color: var(--warm-text); color: var(--warm-text); text-decoration: none; }
-  .act.primary { border-color: color-mix(in srgb, var(--warm-text) 55%, transparent); background: color-mix(in srgb, var(--warm-text) 12%, transparent); color: var(--warm-text); }
-  .act.primary .arr { color: inherit; }
+  /* The certificate is the proof of the silver medal, so it is the one link in silver:
+     a brushed metal face with a lit top edge, raised off the page, and one sheen of light. */
+  .act.cert { position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.55); background: linear-gradient(160deg, #FBFCFD 0%, #D9DEE5 34%, #F4F6F9 50%, #BCC3CD 78%, #E3E7EC 100%); color: #1F242C; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(20, 24, 31, 0.22), 0 6px 16px -8px rgba(0, 0, 0, 0.55); text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6); }
+  .act.cert svg { width: 18px; height: 18px; margin: -2px 0 -2px -2px; }
+  .act.cert .arr { color: #4A525D; }
+  .act.cert::after { content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 45%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.85), transparent); transform: skewX(-18deg); animation: cert-sheen 1.6s 1.2s ease-out 1 both; pointer-events: none; }
+  .act.cert:hover { color: #000; border-color: rgba(255, 255, 255, 0.8); }
+  .act.cert:hover::after { animation: cert-sheen 0.9s ease-out 1; }
+  @keyframes cert-sheen { from { left: -60%; } to { left: 130%; } }
   .eyebrow { margin: 0 0 3px; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2); }
   .tl-item:last-child .acts { margin-bottom: 0; }
   @media (max-width: 600px) {
@@ -249,6 +256,7 @@
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
   @media (prefers-reduced-motion: reduce) {
+    .act.cert::after { animation: none; }
     .tl-ring, .gx-caret { animation: none; }
     .gx-screen { transition: none; }
   }
@@ -328,7 +336,7 @@
       <p style="margin: 0 0 10px; font-size: 15px; max-width: 34rem; text-wrap: pretty">{{ rsnaCopy }}</p>
       <p style="margin: 0 0 6px; font-size: 15px; max-width: 42rem; text-wrap: pretty"><span class="mark silver"><i class="medal" aria-hidden="true"></i>{{ rsnaTop }}</span> <a class="il" href="https://www.kaggle.com/competitions/rsna-knee-abnormality-detection/leaderboard"><b style="font-weight: 600">{{ rsnaCount }}</b></a> {{ rsnaTail }}</p>
       <p style="margin: 0; font-size: 15px; max-width: 42rem; text-wrap: pretty"><span class="mark">{{ effTop }}</span> {{ effPre }}<a class="il" href="https://www.kaggle.com/code/ryanholbrook/rsna-knee-abnormalities-efficiency-lb">{{ effBoardLink }}</a>{{ effPost }} <b style="font-weight: 600">{{ effCount }}</b> {{ effTail }}</p>
-      <p class="acts"><a class="act primary" href="https://www.kaggle.com/certification/competitions/bliverrigpdoge/rsna-knee-abnormality-detection"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 13.8-1.6 7.2 5.1-2.6 5.1 2.6-1.6-7.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>{{ rsnaCert }} <span class="arr">&#8599;</span></a><a class="act" href="https://www.rsna.org/artificial-intelligence/ai-image-challenge/knee-mri-ai-challenge"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>{{ rsnaPage }} <span class="arr">&#8599;</span></a></p>
+      <p class="acts"><a class="act cert" href="https://www.kaggle.com/certification/competitions/bliverrigpdoge/rsna-knee-abnormality-detection"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="cert-disc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#C3CAD4"/><stop offset=".7" stop-color="#EEF1F5"/><stop offset="1" stop-color="#8B94A1"/></linearGradient></defs><path d="M8.2 13.2 6.4 22l5.6-2.9 5.6 2.9-1.8-8.8z" fill="#2B3A55"/><path d="M12 19.1 9.9 20.2l1.3-6.4h1.6l1.3 6.4z" fill="#46597D"/><circle cx="12" cy="9" r="6.6" fill="url(#cert-disc)" stroke="#6E7783" stroke-width=".8"/><circle cx="12" cy="9" r="4.4" fill="none" stroke="#FFFFFF" stroke-opacity=".75" stroke-width=".8"/><path d="m12 6.3.8 1.7 1.9.2-1.4 1.3.4 1.9-1.7-1-1.7 1 .4-1.9-1.4-1.3 1.9-.2z" fill="#6E7783"/></svg>{{ rsnaCert }} <span class="arr">&#8599;</span></a><a class="act" href="https://www.rsna.org/artificial-intelligence/ai-image-challenge/knee-mri-ai-challenge"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>{{ rsnaPage }} <span class="arr">&#8599;</span></a></p>
       <a class="vid" href="https://www.youtube.com/watch?v=Rr1IKsQdcrY" aria-label="{{ videoAlt }}">
         <img src="cv/rsna-video.jpg" alt="{{ videoAlt }}" width="960" height="540" loading="lazy">
         <span class="vid-txt">
