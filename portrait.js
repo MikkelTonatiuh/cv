@@ -6,6 +6,7 @@
    Whatever goes wrong, the photo itself ends up showing. */
 
 const N = 192;
+const L = N * N * 3;
 const LEVELS = [6, 8, 12, 16, 24, 32, 48, 64, 96, 192];
 
 function gauss(n) {
@@ -19,9 +20,8 @@ function gauss(n) {
   return out;
 }
 
-export function mountPortrait(host, { delay = 600, duration = 2800 } = {}) {
+export function mountPortrait(host, { delay = 200, duration = 2800 } = {}) {
   const photo = document.createElement("img");
-  photo.src = "cv/portrait.jpg";
   photo.alt = "Mikkel T. Chávez Petersen";
   photo.width = photo.height = 320;
   const canvas = document.createElement("canvas");
@@ -30,26 +30,47 @@ export function mountPortrait(host, { delay = 600, duration = 2800 } = {}) {
   host.append(canvas, photo);
 
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (still) return { destroy() { canvas.remove(); photo.remove(); } };
-
-  let raf = 0, timer = 0, alive = true, visible = false, started = false;
-  const show = () => {
-    photo.style.opacity = "1";
-    canvas.style.visibility = "hidden";
-  };
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) return { destroy() { canvas.remove(); photo.remove(); } };
+  if (still || !ctx) {
+    photo.src = "cv/portrait.jpg";
+    canvas.remove();
+    return { destroy() { photo.remove(); } };
+  }
+
+  let raf = 0, idle = 0, timer = 0, guard = 0, alive = true, visible = false, started = false, shown = false;
   photo.style.opacity = "0";
-  photo.style.transition = "opacity 0.25s ease-out";
-  photo.addEventListener("error", show);
+  photo.style.transition = "opacity 0.3s ease-out";
+  const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; go(); });
+
+  /* The end, once: the photo fades in over the last frame, and only then does
+     the canvas go, so the circle never blinks empty. */
+  const show = () => {
+    if (shown) return;
+    shown = true;
+    cancelAnimationFrame(raf); cancelAnimationFrame(idle);
+    clearTimeout(timer); clearTimeout(guard);
+    io.disconnect();
+    photo.style.opacity = "1";
+    setTimeout(() => { canvas.style.visibility = "hidden"; }, 350);
+  };
+  /* No photo: leave a plain disc rather than a broken image and its alt text. */
+  photo.addEventListener("error", () => {
+    show();
+    photo.style.display = "none";
+    canvas.style.visibility = "hidden";
+  });
 
   /* One pool of Gaussian noise, read at a different offset for each step's
      fresh draw: cheap enough for a phone, and still uncorrelated step to step. */
-  const L = N * N * 3;
   const pool = gauss(L + 7919);
+  const eps = pool.slice(0, L);
   const frame = ctx.createImageData(N, N);
   const px = frame.data;
-  const paint = (x0, a, b, eps) => {
+  const refresh = () => {
+    const off = Math.floor(Math.random() * 7919);
+    for (let i = 0; i < L; i++) eps[i] = 0.92 * eps[i] + 0.392 * pool[i + off];
+  };
+  const paint = (x0, a, b) => {
     for (let i = 0, j = 0; i < px.length; i += 4, j += 3) {
       px[i] = (a * (x0 ? x0[j] : 0) + b * eps[j] + 1) * 127.5;
       px[i + 1] = (a * (x0 ? x0[j + 1] : 0) + b * eps[j + 1] + 1) * 127.5;
@@ -58,8 +79,17 @@ export function mountPortrait(host, { delay = 600, duration = 2800 } = {}) {
     }
     ctx.putImageData(frame, 0, 0);
   };
-  const eps = pool.slice(0, L);
-  paint(null, 0, 1, eps);
+  paint(null, 0, 1);
+
+  /* While the photo is on its way the noise keeps moving, so it reads as a
+     sampler warming up rather than a stuck image. */
+  let lastIdle = 0;
+  const tick = (now) => {
+    if (!alive || started || shown) return;
+    if (visible && now - lastIdle > 110) { lastIdle = now; refresh(); paint(null, 0, 1); }
+    idle = requestAnimationFrame(tick);
+  };
+  idle = requestAnimationFrame(tick);
 
   const run = () => {
     try {
@@ -82,24 +112,26 @@ export function mountPortrait(host, { delay = 600, duration = 2800 } = {}) {
         }
         return x;
       });
-      const t0 = performance.now();
-      let last = -1;
+      /* Progress counts frames' time but at most 64 ms of it per frame, so when
+         something else holds the page up the reveal pauses instead of skipping. */
+      let prev = performance.now(), elapsed = 0, last = -1;
       const step = () => {
-        if (!alive) return;
+        if (!alive || shown) return;
         try {
-          /* Clock read here, not from the frame timestamp, which can be a little
-             earlier than t0 and would put p below zero. */
-          const p = Math.min(1, Math.max(0, (performance.now() - t0) / duration));
+          const now = performance.now();
+          elapsed += Math.min(Math.max(0, now - prev), 64);
+          prev = now;
+          const p = Math.min(1, elapsed / duration);
           const k = Math.floor(p * 60);
           if (k !== last) {
             last = k;
-            /* Cosine schedule: ā(t) = cos²(π/2 · (t + s) / (1 + s)), t from 1 to 0. */
-            const t = 1 - p, s = 0.008;
+            /* Cosine schedule, ā(t) = cos²(π/2 · (t + s) / (1 + s)), from t = 0.9 to 0:
+               the very top of the schedule is static with nothing in it yet. */
+            const t = 0.9 * (1 - p), s = 0.008;
             const ab = Math.cos((Math.PI / 2) * (t + s) / (1 + s)) ** 2;
             const level = Math.min(levels.length - 1, Math.floor(Math.pow(p, 0.8) * levels.length));
-            const off = Math.floor(Math.random() * 7919);
-            for (let i = 0; i < L; i++) eps[i] = 0.92 * eps[i] + 0.392 * pool[i + off];
-            paint(levels[level], Math.sqrt(ab), Math.sqrt(1 - ab), eps);
+            refresh();
+            paint(levels[level], Math.sqrt(ab), Math.sqrt(1 - ab));
           }
           if (p < 1) raf = requestAnimationFrame(step);
           else show();
@@ -113,23 +145,23 @@ export function mountPortrait(host, { delay = 600, duration = 2800 } = {}) {
     }
   };
 
-  const go = () => {
-    if (started || !visible || !photo.complete || !photo.naturalWidth) return;
+  function go() {
+    if (started || shown || !visible || !photo.complete || !photo.naturalWidth) return;
     started = true;
+    cancelAnimationFrame(idle);
     timer = setTimeout(run, delay);
-  };
+    /* If the reveal has not finished well after it should have, show the photo. */
+    guard = setTimeout(show, delay + duration * 4 + 2000);
+  }
   photo.addEventListener("load", go);
-  const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; go(); });
+  photo.src = "cv/portrait.jpg";
   io.observe(host);
-  /* A last guard: if it has not finished in time for any reason, show the photo. */
-  const guard = setTimeout(() => { if (photo.style.opacity !== "1") show(); }, 15000);
 
   return {
     destroy() {
       alive = false;
-      cancelAnimationFrame(raf);
-      clearTimeout(timer);
-      clearTimeout(guard);
+      cancelAnimationFrame(raf); cancelAnimationFrame(idle);
+      clearTimeout(timer); clearTimeout(guard);
       io.disconnect();
       canvas.remove();
       photo.remove();

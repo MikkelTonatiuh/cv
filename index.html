@@ -9,6 +9,7 @@
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="preload" as="image" href="cv/portrait.jpg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Google+Sans:wght@500&display=swap">
 <style>
   :root {
@@ -52,15 +53,17 @@
   /* The portrait (portrait.js) with the contact marks under it, floated so the
      intro runs beside it. The marks say where they go; the tooltip and label say it in words. */
   .pf-col { float: right; width: 136px; margin: 2px 0 10px 28px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  .pf { position: relative; display: block; width: 128px; height: 128px; border-radius: 50%; overflow: hidden; background: #111; box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 16%, transparent); }
+  .pf { position: relative; display: block; width: 128px; height: 128px; border-radius: 50%; overflow: hidden; background: color-mix(in srgb, var(--ink) 14%, var(--bg)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 16%, transparent); }
   .pf img, .pf canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .pf img { object-fit: cover; }
   .contact { display: flex; justify-content: center; align-items: center; gap: 2px; }
   .contact a { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; color: var(--ink-2); transition: color 0.15s, background-color 0.15s; }
   .contact a:hover { color: var(--warm-text); background: color-mix(in srgb, var(--warm-text) 12%, transparent); text-decoration: none; }
   .contact svg { width: 18px; height: 18px; flex: none; }
+  .contact a { position: relative; }
+  .contact a::after { content: ""; position: absolute; inset: -6px; }
   @media (max-width: 600px) {
-    .pf-col { width: 112px; margin-left: 14px; gap: 6px; }
+    .pf-col { width: 118px; margin-left: 14px; gap: 6px; }
     .pf { width: 96px; height: 96px; }
     .contact a { width: 27px; height: 27px; }
     .contact svg { width: 16px; height: 16px; }
@@ -214,7 +217,7 @@
   </div>
 
   <main style="position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: clamp(104px, 13vh, 136px) 20px 4vh">
-    <h1 ref="{{ nameRef }}" data-mutter="name" style="margin: 0 0 8px; padding: 0; font-size: 0; line-height: 0">
+    <h1 ref="{{ nameRef }}" data-mutter="name" style="margin: 0 0 8px; padding: 0; font-size: 0; line-height: 0; min-height: 31px">
       <span ref="{{ mathRef }}" aria-hidden="true" style="position: absolute; display: block; max-width: 100%; width: 330px; height: 96px; opacity: 0; pointer-events: none; z-index: 2"></span>
     </h1>
 
@@ -766,17 +769,28 @@ class Component extends DCLogic {
     try { quiet = localStorage.getItem("cv-sound") === "off"; } catch (e) { quiet = false; }
     if (quiet) this.setState({ sound: false });
 
-    if (this.topo && this.nameHost) {
-      const { mountScene } = await import("./scene.js");
-      this.scene = mountScene({ fieldSvg: this.topo, nameHost: this.nameHost, mathHost: this.mathHost });
-    }
+    /* The portrait goes first and does not wait on anything after it; each
+       module below is mounted on its own, so one failing does not stop the rest. */
     if (this.portraitHost) {
-      const { mountPortrait } = await import("./portrait.js");
-      this.portrait = mountPortrait(this.portraitHost);
+      import("./portrait.js")
+        .then(({ mountPortrait }) => { if (this.portraitHost) this.portrait = mountPortrait(this.portraitHost); })
+        .catch((err) => console.warn("portrait unavailable", err));
+    }
+    if (this.topo && this.nameHost) {
+      try {
+        const { mountScene } = await import("./scene.js");
+        this.scene = mountScene({ fieldSvg: this.topo, nameHost: this.nameHost, mathHost: this.mathHost });
+      } catch (err) {
+        console.warn("scene unavailable", err);
+      }
     }
     if (this.agentHost) {
-      const { mountAgent } = await import("./agent.js");
-      this.agent = mountAgent(this.agentHost);
+      try {
+        const { mountAgent } = await import("./agent.js");
+        this.agent = mountAgent(this.agentHost);
+      } catch (err) {
+        console.warn("terminal unavailable", err);
+      }
     }
     if (this.mathHost) {
       try {
