@@ -232,10 +232,11 @@
     [data-controls], .topo, .mut, :has(> .blop), .tl-ring, .skills .caret { display: none !important; }
     main { max-width: none !important; margin: 0 !important; padding: 0 0 0 96px !important; }
     main > h1 { display: none !important; }
-    .print-name { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 4px; }
-    .print-name > a { font: 500 34px/1.15 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; letter-spacing: -0.02em; color: var(--ink-hi); text-decoration: none; }
-    .print-hint { font-size: 11.5px; font-weight: 600; color: var(--warm-text); }
-    .print-hint .arr { font-size: 11px; }
+    /* The name is the way to the live page; the amber open mark says so without words. */
+    .print-name { display: block; margin: 0 0 4px; }
+    .print-name > a { display: inline-flex; align-items: center; gap: 12px; font: 500 34px/1.15 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; letter-spacing: -0.02em; color: var(--ink-hi); text-decoration: none; }
+    .print-go { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--warm-text); color: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, var(--warm-text) 14%, transparent); }
+    .print-go svg { width: 16px; height: 16px; }
     .pf-col { margin-top: 0 !important; margin-right: 0 !important; width: 184px !important; }
     .tl-item > article { margin-bottom: 18px !important; }
     .acts { margin: 8px 0 8px; }
@@ -278,7 +279,7 @@
       <span ref="{{ mathRef }}" aria-hidden="true" style="position: absolute; display: block; max-width: 100%; width: 330px; height: 96px; opacity: 0; pointer-events: none; z-index: 2"></span>
     </h1>
 
-    <p class="print-name"><a href="https://mikkeltonatiuh.github.io/voicemaster-rendering/">Mikkel T. Chávez Petersen</a><span class="print-hint">{{ printHint }} <span class="arr">&#8599;</span></span></p>
+    <p class="print-name"><a href="https://mikkeltonatiuh.github.io/voicemaster-rendering/">Mikkel T. Chávez Petersen<span class="print-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 16 16 8M9.5 8H16v6.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a></p>
     <p class="sub" data-mutter="meta">{{ meta }}</p>
     <div class="pf-col">
       <span class="pf" ref="{{ portraitRef }}"></span>
@@ -429,7 +430,6 @@ class Component extends DCLogic {
       gemmaBy: "Hosted by",
       gemmaBoardLink: "Rank {n}",
       degreeCap: "Data Science graduate",
-      printHint: "Click my name for the live version, where it draws itself",
       thesisExplained: "Interactive explainer",
       gemmaBoardNone: "Leaderboard",
       gemmaBoardOf: "Rank {n} of {t}",
@@ -485,7 +485,6 @@ class Component extends DCLogic {
       gemmaBy: "Organiza",
       gemmaBoardLink: "Puesto {n}",
       degreeCap: "Graduado en Data Science",
-      printHint: "Haz clic en mi nombre para ver la versión en vivo, donde se dibuja solo",
       thesisExplained: "Explicación interactiva",
       gemmaBoardNone: "Clasificación",
       gemmaBoardOf: "Puesto {n} de {t}",
@@ -541,7 +540,6 @@ class Component extends DCLogic {
       gemmaBy: "Arrangør",
       gemmaBoardLink: "Nr. {n}",
       degreeCap: "Uddannet i Data Science",
-      printHint: "Klik på mit navn for den levende version, hvor det tegner sig selv",
       thesisExplained: "Interaktiv gennemgang",
       gemmaBoardNone: "Rangliste",
       gemmaBoardOf: "Nr. {n} af {t}",
@@ -989,7 +987,6 @@ class Component extends DCLogic {
       rsnaPage: copy.rsnaPage,
       paperLink: copy.paperLink,
       degreeCap: copy.degreeCap,
-      printHint: copy.printHint,
       auLogo: this.state.lang === "da" ? "da" : "en",
       whenGemma: copy.whenGemma,
       whenRsna: copy.whenRsna,
